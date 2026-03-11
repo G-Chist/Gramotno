@@ -13,6 +13,9 @@ GOOFY_WORDS = [
 
 OUTPUT_FILE = "words.txt"
 
+def pad_string_with_spaces(string: str, max_len: int = 20) -> str:
+    return string + " " * (max_len - len(string)) 
+
 def get_random_word() -> str:
     return random.choice(GOOFY_WORDS)
 
@@ -27,7 +30,7 @@ def make_handler(word: str):
 
 def main() -> None:
     with ptg.WindowManager() as manager:
-        words = [get_random_word() for _ in range(5)]
+        words = [pad_string_with_spaces(get_random_word()) for _ in range(5)]
         
         cards = []
         for i, word in enumerate(words, 1):
@@ -38,7 +41,10 @@ def main() -> None:
             "[bold]Goofy Card Clicker![/bold]\n",
             *cards,
             "",
-            f"[dim]Words will be written to {OUTPUT_FILE}[/dim]"
+            "Status line",
+            "",
+            "Words will be written to {OUTPUT_FILE}",
+            ""
         ).center()
 
         for i, btn in enumerate(cards, 1):
