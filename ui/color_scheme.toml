@@ -1,0 +1,21 @@
+[left_index]
+foreground = "#3498db"
+bold = true
+
+[left_word]
+foreground = "#ecf0f1"
+
+[right_index]
+foreground = "#e74c3c"
+bold = true
+
+[right_word]
+foreground = "#ecf0f1"
+
+[left_header]
+foreground = "#3498db"
+bold = true
+
+[right_header]
+foreground = "#e74c3c"
+bold = true

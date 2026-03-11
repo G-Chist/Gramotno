@@ -1,8 +1,12 @@
 import pytermgui as ptg
 import random
 import os
+import tomli as tomllib
 
 ALPHABET_ENG = "abcdefghijklmnopqrstuvwxyz"
+
+with open("ui/color_scheme.toml", "rb") as f:
+    COLORS = tomllib.load(f)
 
 
 GOOFY_WORDS = [
@@ -38,22 +42,26 @@ def main() -> None:
         
         cards_left= []
         for i, word_left in enumerate(words_left, 1):
-            btn = ptg.Button(f"[bold]{i}[/bold]: {word_left}", make_handler(word_left, None, i-1))
+            index_style = f'[{COLORS["left_index"]["foreground"]}]{COLORS["left_index"]["bold"] and "[bold]" or ""}{i}[/bold]'
+            word_style = f'{word_left}'
+            btn = ptg.Button(f"{index_style}: {word_style}", make_handler(word_left, None, i-1))
             cards_left.append(btn)
 
         cards_right = []
         for i, word_right in enumerate(words_right, 1):
-            btn = ptg.Button(f"[bold]{ALPHABET_ENG[i-1]}[/bold]: {word_right}", make_handler(word_right, None, i-1))
+            index_style = f'[{COLORS["right_index"]["foreground"]}]{COLORS["right_index"]["bold"] and "[bold]" or ""}{ALPHABET_ENG[i-1]}[/bold]'
+            word_style = f'{word_right}'
+            btn = ptg.Button(f"{index_style}: {word_style}", make_handler(word_right, None, i-1))
             cards_right.append(btn)
 
         left_container = ptg.Container(
-            "[bold]Left[/bold]\n",
+            f"[{COLORS['left_header']['foreground']}]{COLORS['left_header']['bold'] and '[bold]' or ''}Left[/bold]\n",
             *cards_left,
             "",
         )
 
         right_container = ptg.Container(
-            "[bold]Right[/bold]\n",
+            f"[{COLORS['right_header']['foreground']}]{COLORS['right_header']['bold'] and '[bold]' or ''}Right[/bold]\n",
             *cards_right,
             "",
         )
