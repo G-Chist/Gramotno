@@ -1,21 +1,24 @@
+[background]
+foreground = "#222222"
+
 [left_index]
-foreground = "#3498db"
+foreground = "#ffcc66"
 bold = true
 
 [left_word]
-foreground = "#ecf0f1"
+foreground = "#cbcbcb"
 
 [right_index]
-foreground = "#e74c3c"
+foreground = "#f2777a"
 bold = true
 
 [right_word]
-foreground = "#ecf0f1"
+foreground = "#cbcbcb"
 
 [left_header]
-foreground = "#3498db"
+foreground = "#ffcc66"
 bold = true
 
 [right_header]
-foreground = "#e74c3c"
+foreground = "#f2777a"
 bold = true

@@ -87,6 +87,7 @@ def main() -> None:
             width=int(1 * ptg.terminal.width),
             is_noblur=True,
         ).center()
+        window.styles.fill = COLORS["background"]["foreground"]
 
         manager.add(window)
 
