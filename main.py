@@ -5,6 +5,19 @@ import tomli as tomllib
 
 ALPHABET_ENG = "abcdefghijklmnopqrstuvwxyz"
 
+logo_string = """
+
+    ▄▄▄▄                                                                        
+  ██▀▀▀▀█                                            ██                         
+ ██         ██▄████   ▄█████▄  ████▄██▄   ▄████▄   ███████   ██▄████▄   ▄████▄  
+ ██  ▄▄▄▄   ██▀       ▀ ▄▄▄██  ██ ██ ██  ██▀  ▀██    ██      ██▀   ██  ██▀  ▀██ 
+ ██  ▀▀██   ██       ▄██▀▀▀██  ██ ██ ██  ██    ██    ██      ██    ██  ██    ██ 
+  ██▄▄▄██   ██       ██▄▄▄███  ██ ██ ██  ▀██▄▄██▀    ██▄▄▄   ██    ██  ▀██▄▄██▀ 
+    ▀▀▀▀    ▀▀        ▀▀▀▀ ▀▀  ▀▀ ▀▀ ▀▀    ▀▀▀▀       ▀▀▀▀   ▀▀    ▀▀    ▀▀▀▀   
+                                                                                
+
+"""
+
 with open("ui/settings.toml", "rb") as f:
     SETTINGS = tomllib.load(f)
 
@@ -41,18 +54,21 @@ def main() -> None:
         words_left = [pad_string_with_spaces(get_random_word()) for _ in range(5)]
         words_right = [pad_string_with_spaces(get_random_word()) for _ in range(5)]
         
+        left_keys = [SETTINGS["left_keys"][f"key_{i}"] for i in range(1, 6)]
+        right_keys = [SETTINGS["right_keys"][f"key_{i}"] for i in range(1, 6)]
+
         cards_left= []
-        for i, word_left in enumerate(words_left, 1):
-            index_style = f'[{COLORS["left_index"]["foreground"]}]{COLORS["left_index"]["bold"] and "[bold]" or ""}{i}[/bold]'
+        for i, word_left in enumerate(words_left):
+            index_style = f'[{COLORS["left_index"]["foreground"]}]{COLORS["left_index"]["bold"] and "[bold]" or ""}{left_keys[i]}[/bold]'
             word_style = f'{word_left}'
-            btn = ptg.Button(f"{index_style}: {word_style}", make_handler(word_left, None, i-1))
+            btn = ptg.Button(f"{index_style}: {word_style}", make_handler(word_left, None, i))
             cards_left.append(btn)
 
         cards_right = []
-        for i, word_right in enumerate(words_right, 1):
-            index_style = f'[{COLORS["right_index"]["foreground"]}]{COLORS["right_index"]["bold"] and "[bold]" or ""}{ALPHABET_ENG[i-1]}[/bold]'
+        for i, word_right in enumerate(words_right):
+            index_style = f'[{COLORS["right_index"]["foreground"]}]{COLORS["right_index"]["bold"] and "[bold]" or ""}{right_keys[i]}[/bold]'
             word_style = f'{word_right}'
-            btn = ptg.Button(f"{index_style}: {word_style}", make_handler(word_right, None, i-1))
+            btn = ptg.Button(f"{index_style}: {word_style}", make_handler(word_right, None, i))
             cards_right.append(btn)
 
         left_container = ptg.Container(
@@ -67,13 +83,13 @@ def main() -> None:
             "",
         )
 
-        for i, btn in enumerate(cards_left, 1):
-            handler = make_handler(words_left[i-1], left_container, i-1)
-            left_container.bind(str(i), lambda *_, h=handler: h())
+        for i, btn in enumerate(cards_left):
+            handler = make_handler(words_left[i], left_container, i)
+            left_container.bind(left_keys[i], lambda *_, h=handler: h())
 
-        for i, btn in enumerate(cards_right, 1):
-            handler = make_handler(words_right[i-1], right_container, i-1)
-            right_container.bind(str(ALPHABET_ENG[i-1]), lambda *_, h=handler: h())
+        for i, btn in enumerate(cards_right):
+            handler = make_handler(words_right[i], right_container, i)
+            right_container.bind(right_keys[i], lambda *_, h=handler: h())
 
         splitter = ptg.Splitter(
             left_container,
@@ -82,13 +98,16 @@ def main() -> None:
         splitter.chars["separator"] = ""
 
         window = ptg.Window(
+            logo_string,
             splitter,
             "",
             f"[dim]Words will be written to {OUTPUT_FILE}[/dim]",
             width=int(ptg.terminal.width),
+            height=int(ptg.terminal.height*0.8),
             is_noblur=True,
         ).center()
         window.styles.fill = COLORS["background"]["foreground"]
+        window.styles.border = ""
 
         manager.add(window)
 

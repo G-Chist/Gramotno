@@ -25,3 +25,17 @@ bold = true
 [right_header]
 foreground = "#f2777a"
 bold = true
+
+[left_keys]
+key_1 = "1"
+key_2 = "2"
+key_3 = "3"
+key_4 = "4"
+key_5 = "5"
+
+[right_keys]
+key_1 = "a"
+key_2 = "b"
+key_3 = "c"
+key_4 = "d"
+key_5 = "e"
