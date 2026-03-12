@@ -24,10 +24,7 @@ with open("ui/settings.toml", "rb") as f:
 COLORS = SETTINGS
 
 GOOFY_WORDS = [
-    "wobble", "bumbly", "splork", "noodle", "flurg",
-    "blimp", "quack", "zorp", "glimp", "spork",
-    "boop", "dingle", "wazzock", "goblin", "honk",
-    "squelch", "flump", "boggle", "snark", "gurgle"
+    "chud", "huzz", "chopped", "clavicular", "mogging", "piss", "them", "polycule", "goy", "chad"
 ]
 
 OUTPUT_FILE = "words.txt"
