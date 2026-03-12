@@ -66,6 +66,18 @@ OUTPUT_FILE = "words.txt"
 def pad_string_with_spaces(string: str, max_len: int = 20) -> str:
     return string + " " * (max_len - len(string)) 
 
+def hex_to_rgb(hex_color: str) -> tuple[int, int, int]:
+    hex_color = hex_color.lstrip('#')
+    return tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
+
+def invert_color(r: int, g: int, b: int) -> tuple[int, int, int]:
+    return (255 - r, 255 - g, 255 - b)
+
+def color_preview(hex_color: str, text: str = "Preview") -> str:
+    r, g, b = hex_to_rgb(hex_color)
+    ir, ig, ib = invert_color(r, g, b)
+    return f"[{ir};{ig};{ib} @{r};{g};{b}]{text}[/]"
+
 def get_random_word() -> str:
     return random.choice(GOOFY_WORDS)
 
@@ -140,7 +152,6 @@ def main() -> None:
             height=int(ptg.terminal.height*0.8),
             is_noblur=True,
         ).center()
-        window.styles.fill = COLORS["background"]["foreground"]
         window.styles.border = ""
 
         manager.add(window)
@@ -149,16 +160,30 @@ def main() -> None:
             native_input = ptg.InputField(SETTINGS['native_lang']['code'])
             learning_input = ptg.InputField(SETTINGS['learning_lang']['code'])
             
-            bg_input = ptg.InputField(SETTINGS['background']['foreground'])
             left_idx_input = ptg.InputField(SETTINGS['left_index']['foreground'])
             right_idx_input = ptg.InputField(SETTINGS['right_index']['foreground'])
             left_hdr_input = ptg.InputField(SETTINGS['left_header']['foreground'])
             right_hdr_input = ptg.InputField(SETTINGS['right_header']['foreground'])
 
+            left_idx_preview = ptg.Label(color_preview(SETTINGS['left_index']['foreground']))
+            right_idx_preview = ptg.Label(color_preview(SETTINGS['right_index']['foreground']))
+            left_hdr_preview = ptg.Label(color_preview(SETTINGS['left_header']['foreground']))
+            right_hdr_preview = ptg.Label(color_preview(SETTINGS['right_header']['foreground']))
+
+            def update_previews(*args):
+                left_idx_preview.value = color_preview(left_idx_input.value)
+                right_idx_preview.value = color_preview(right_idx_input.value)
+                left_hdr_preview.value = color_preview(left_hdr_input.value)
+                right_hdr_preview.value = color_preview(right_hdr_input.value)
+
+            left_idx_input.bind("any", update_previews)
+            right_idx_input.bind("any", update_previews)
+            left_hdr_input.bind("any", update_previews)
+            right_hdr_input.bind("any", update_previews)
+
             def save_all(*args):
                 SETTINGS['native_lang']['code'] = native_input.value
                 SETTINGS['learning_lang']['code'] = learning_input.value
-                SETTINGS['background']['foreground'] = bg_input.value
                 SETTINGS['left_index']['foreground'] = left_idx_input.value
                 SETTINGS['right_index']['foreground'] = right_idx_input.value
                 SETTINGS['left_header']['foreground'] = left_hdr_input.value
@@ -170,30 +195,33 @@ def main() -> None:
             save_btn = ptg.Button("[bold]Save[/bold]", save_all)
             cancel_btn = ptg.Button("[dim]Cancel[/dim]", lambda *_: manager.remove(settings_window))
 
+            ptg.Splitter.set_char("separator", "")
+
             settings_window = ptg.Window(
                 "[bold]Settings[/bold]",
                 "",
-                ptg.Container("[bold]Languages[/bold]"),
-                ptg.Container("Native", native_input),
-                ptg.Container("Learning", learning_input),
+                ptg.Container("[bold]Languages[/bold]", box="EMPTY"),
                 "",
-                ptg.Container("[bold]Colors[/bold]"),
-                ptg.Container("Background", bg_input),
-                ptg.Container("Left index", left_idx_input),
-                ptg.Container("Right index", right_idx_input),
-                ptg.Container("Left header", left_hdr_input),
-                ptg.Container("Right header", right_hdr_input),
+                ptg.Splitter(ptg.Label(pad_string_with_spaces("Native", 15)), native_input),
+                ptg.Splitter(ptg.Label(pad_string_with_spaces("Learning", 15)), learning_input),
+                "",
+                ptg.Container("[bold]Colors[/bold]", box="EMPTY"),
+                "",
+                ptg.Splitter(ptg.Label(pad_string_with_spaces("Left index", 15)), left_idx_input, left_idx_preview),
+                ptg.Splitter(ptg.Label(pad_string_with_spaces("Right index", 15)), right_idx_input, right_idx_preview),
+                ptg.Splitter(ptg.Label(pad_string_with_spaces("Left header", 15)), left_hdr_input, left_hdr_preview),
+                ptg.Splitter(ptg.Label(pad_string_with_spaces("Right header", 15)), right_hdr_input, right_hdr_preview),
                 "",
                 ptg.Splitter(save_btn, cancel_btn),
                 "",
-                "[dim]Press q to close[/dim]",
-                width=60,
+                "[dim]Press Q to close[/dim]",
+                width=70,
                 is_noblur=True,
             ).center()
-            settings_window.styles.fill = COLORS["background"]["foreground"]
+            
             settings_window.styles.border = ""
             
-            settings_window.bind("q", lambda *_: manager.remove(settings_window))
+            settings_window.bind("Q", lambda *_: manager.remove(settings_window))
             
             manager.add(settings_window)
 
