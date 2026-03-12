@@ -5,9 +5,10 @@ import tomli as tomllib
 
 ALPHABET_ENG = "abcdefghijklmnopqrstuvwxyz"
 
-with open("ui/color_scheme.toml", "rb") as f:
-    COLORS = tomllib.load(f)
+with open("ui/settings.toml", "rb") as f:
+    SETTINGS = tomllib.load(f)
 
+COLORS = SETTINGS
 
 GOOFY_WORDS = [
     "wobble", "bumbly", "splork", "noodle", "flurg",
@@ -84,7 +85,7 @@ def main() -> None:
             splitter,
             "",
             f"[dim]Words will be written to {OUTPUT_FILE}[/dim]",
-            width=int(1 * ptg.terminal.width),
+            width=int(ptg.terminal.width),
             is_noblur=True,
         ).center()
         window.styles.fill = COLORS["background"]["foreground"]

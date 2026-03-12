@@ -1,3 +1,6 @@
+[ui]
+font_size = 36
+
 [background]
 foreground = "#222222"
 
