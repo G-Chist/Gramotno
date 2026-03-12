@@ -170,16 +170,18 @@ def main() -> None:
             left_hdr_preview = ptg.Label(color_preview(SETTINGS['left_header']['foreground']))
             right_hdr_preview = ptg.Label(color_preview(SETTINGS['right_header']['foreground']))
 
-            def update_previews(*args):
+            def update_previews(_=None):
                 left_idx_preview.value = color_preview(left_idx_input.value)
                 right_idx_preview.value = color_preview(right_idx_input.value)
                 left_hdr_preview.value = color_preview(left_hdr_input.value)
                 right_hdr_preview.value = color_preview(right_hdr_input.value)
 
-            left_idx_input.bind("any", update_previews)
-            right_idx_input.bind("any", update_previews)
-            left_hdr_input.bind("any", update_previews)
-            right_hdr_input.bind("any", update_previews)
+            update_btn = ptg.Button("Update Preview", update_previews)
+
+            left_idx_input.bind("enter", update_previews)
+            right_idx_input.bind("enter", update_previews)
+            left_hdr_input.bind("enter", update_previews)
+            right_hdr_input.bind("enter", update_previews)
 
             def save_all(*args):
                 SETTINGS['native_lang']['code'] = native_input.value
@@ -212,9 +214,9 @@ def main() -> None:
                 ptg.Splitter(ptg.Label(pad_string_with_spaces("Left header", 15)), left_hdr_input, left_hdr_preview),
                 ptg.Splitter(ptg.Label(pad_string_with_spaces("Right header", 15)), right_hdr_input, right_hdr_preview),
                 "",
-                ptg.Splitter(save_btn, cancel_btn),
+                ptg.Splitter(update_btn, save_btn, cancel_btn),
                 "",
-                "[dim]Press Q to close[/dim]",
+                "[dim]U: Update preview | S: Save | Q: Close[/dim]",
                 width=70,
                 is_noblur=True,
             ).center()
@@ -222,6 +224,8 @@ def main() -> None:
             settings_window.styles.border = ""
             
             settings_window.bind("Q", lambda *_: manager.remove(settings_window))
+            settings_window.bind("U", lambda *_: update_previews())
+            settings_window.bind("S", lambda *_: save_all())
             
             manager.add(settings_window)
 
