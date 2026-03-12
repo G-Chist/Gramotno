@@ -6,7 +6,9 @@ import tomli_w as tomlwrite
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from models.schema import Base, UserSettings
+from language_logic.language_utils import strip_punctuation, translate 
+
+from models.schema import Base, UserSettings, Language, Card, Progress
 
 ALPHABET_ENG = "abcdefghijklmnopqrstuvwxyz"
 
@@ -27,6 +29,10 @@ with open("settings/settings.toml", "rb") as f:
     SETTINGS = tomllib.load(f)
 
 COLORS = SETTINGS
+
+STATUS = ptg.Label("[dim]Please load words![/dim]")
+
+FILE_TO_LOAD = "enter .txt file path"
 
 engine = create_engine('sqlite:///evolving_cards.db')
 Session = sessionmaker(bind=engine)
@@ -57,11 +63,17 @@ def reload_settings():
         SETTINGS = tomllib.load(f)
     COLORS = SETTINGS
 
-GOOFY_WORDS = [
-    "chud", "huzz", "chopped", "clavicular", "mogging", "piss", "them", "polycule", "goy", "chad"
-]
+def get_words_from_db() -> list[str]:
+    session = Session()
+    cards = session.query(Card).all()
+    session.close()
+    return [card.word for card in cards]
 
-OUTPUT_FILE = "words.txt"
+def get_random_word() -> str:
+    words = get_words_from_db()
+    if not words:
+        return "N/A"
+    return random.choice(words)
 
 def pad_string_with_spaces(string: str, max_len: int = 20) -> str:
     return string + " " * (max_len - len(string)) 
@@ -78,8 +90,19 @@ def color_preview(hex_color: str, text: str = "Preview") -> str:
     ir, ig, ib = invert_color(r, g, b)
     return f"[{ir};{ig};{ib} @{r};{g};{b}]{text}[/]"
 
+def get_words_from_db() -> list[str]:
+    session = Session()
+    cards = session.query(Card).all()
+    session.close()
+    return [card.word for card in cards]
+
 def get_random_word() -> str:
-    return random.choice(GOOFY_WORDS)
+    words = get_words_from_db()
+    if not words:
+        return "N/A"
+    return random.choice(words)
+
+OUTPUT_FILE = "words.txt"
 
 def write_word(word: str) -> None:
     with open(OUTPUT_FILE, "a") as f:
@@ -94,8 +117,32 @@ def make_handler(word: str, container: 'ptg.Container', index: int):
 
 def main() -> None:
     with ptg.WindowManager() as manager:
-        words_left = [pad_string_with_spaces(get_random_word()) for _ in range(5)]
-        words_right = [pad_string_with_spaces(get_random_word()) for _ in range(5)]
+        session = Session()
+        all_cards = session.query(Card).all()
+        session.close()
+
+        if not all_cards:
+            words_left = [pad_string_with_spaces("N/A") for _ in range(5)]
+            words_right = [pad_string_with_spaces("N/A") for _ in range(5)]
+            translations_left = ["N/A"] * 5
+            words_right_orig = ["N/A"] * 5
+            left_ids = [None] * 5
+            right_ids = [None] * 5
+        else:
+            selected_cards = random.sample(all_cards, min(5, len(all_cards)))
+
+            left_pairs = [(card.id, card.translation) for card in selected_cards]
+            random.shuffle(left_pairs)
+            left_ids = [p[0] for p in left_pairs]
+            translations_left = [p[1] for p in left_pairs]
+
+            right_pairs = [(card.id, card.word) for card in selected_cards]
+            random.shuffle(right_pairs)
+            right_ids = [p[0] for p in right_pairs]
+            words_right_orig = [p[1] for p in right_pairs]
+
+            words_left = [pad_string_with_spaces(t) for t in translations_left]
+            words_right = [pad_string_with_spaces(w) for w in words_right_orig]
         
         left_keys = [SETTINGS["left_keys"][f"key_{i}"] for i in range(1, 6)]
         right_keys = [SETTINGS["right_keys"][f"key_{i}"] for i in range(1, 6)]
@@ -115,24 +162,51 @@ def main() -> None:
             cards_right.append(btn)
 
         left_container = ptg.Container(
-            f"[{COLORS['left_header']['foreground']}]{COLORS['left_header']['bold'] and '[bold]' or ''}Left[/bold]\n",
+            f"[{COLORS['left_header']['foreground']}]{COLORS['left_header']['bold'] and '[bold]' or ''}Native[/bold]\n",
             *cards_left,
             "",
         )
 
         right_container = ptg.Container(
-            f"[{COLORS['right_header']['foreground']}]{COLORS['right_header']['bold'] and '[bold]' or ''}Right[/bold]\n",
+            f"[{COLORS['right_header']['foreground']}]{COLORS['right_header']['bold'] and '[bold]' or ''}Learning[/bold]\n",
             *cards_right,
             "",
         )
 
+        selected_left = [None]
+        selected_right = [None]
+
+        def make_left_handler(idx):
+            def handler(*args):
+                selected_left[0] = idx
+                left_container.select(idx)
+                if selected_right[0] is not None:
+                    if left_ids[idx] == right_ids[selected_right[0]]:
+                        STATUS.value = "[green]SUCCESS![/]"
+                        selected_left[0] = None
+                        selected_right[0] = None
+                    else:
+                        STATUS.value = "[red]Try again![/]"
+            return handler
+
+        def make_right_handler(idx):
+            def handler(*args):
+                selected_right[0] = idx
+                right_container.select(idx)
+                if selected_left[0] is not None:
+                    if right_ids[idx] == left_ids[selected_left[0]]:
+                        STATUS.value = "[green]SUCCESS![/]"
+                        selected_left[0] = None
+                        selected_right[0] = None
+                    else:
+                        STATUS.value = "[red]Try again![/]"
+            return handler
+
         for i, btn in enumerate(cards_left):
-            handler = make_handler(words_left[i], left_container, i)
-            left_container.bind(left_keys[i], lambda *_, h=handler: h())
+            left_container.bind(left_keys[i], make_left_handler(i))
 
         for i, btn in enumerate(cards_right):
-            handler = make_handler(words_right[i], right_container, i)
-            right_container.bind(right_keys[i], lambda *_, h=handler: h())
+            right_container.bind(right_keys[i], make_right_handler(i))
 
         splitter = ptg.Splitter(
             left_container,
@@ -144,9 +218,9 @@ def main() -> None:
             logo_string,
             splitter,
             "",
-            f"[dim]Words will be written to {OUTPUT_FILE}[/dim]",
+            STATUS,
             "",
-            f"[dim]Press ? to open settings[/dim]",
+            f"[dim]Press ? to open settings, L to open text loader, Ctrl-c to quit[/dim]",
             "",
             width=int(ptg.terminal.width),
             height=int(ptg.terminal.height*0.8),
@@ -155,6 +229,79 @@ def main() -> None:
         window.styles.border = ""
 
         manager.add(window)
+
+        def open_text_loader():
+            text_file_input = ptg.InputField(FILE_TO_LOAD)
+
+            def save_text_loader(*args):
+                file_path = text_file_input.value
+                loading_status.value = "[bold]Loading...[/bold]"
+
+                with open(file_path, "r", encoding="utf-8") as f:
+                    content = f.read()
+
+                words = [w.lower() for w in strip_punctuation(content)]
+                unique_words = list(set(words))
+
+                session = Session()
+                for word in unique_words:
+                    if not word or not word.isalpha():
+                        continue
+                    if session.query(Card).filter_by(word=word).first():
+                        continue
+                    try:
+                        translation = translate(word, SETTINGS['learning_lang']['code'], SETTINGS['native_lang']['code'])
+                        translation = strip_punctuation(translation)[0] if strip_punctuation(translation) else translation
+                        if translation.lower() == word:
+                            print(f"Skipping '{word}': translation same as word")
+                            continue
+                        card = Card(
+                            word=word,
+                            translation=translation,
+                            source_lang=SETTINGS['learning_lang']['code'],
+                            target_lang=SETTINGS['native_lang']['code']
+                        )
+                        session.add(card)
+                    except KeyboardInterrupt:
+                        session.rollback()
+                        session.close()
+                        loading_status.value = "[red]Interrupted"
+                        print("Load interrupted by user")
+                        return
+                    except Exception as e:
+                        print(f"Failed to translate '{word}': {e}")
+                session.commit()
+                session.close()
+                loading_status.value = f"[green]Loaded {len(unique_words)} words!"
+                manager.remove(text_loader_window)
+
+            save_btn = ptg.Button("[bold]Save[/bold]", save_text_loader)
+            cancel_btn = ptg.Button("[dim]Cancel[/dim]", lambda *_: manager.remove(text_loader_window))
+
+            loading_status = ptg.Label("[dim]Ready[/dim]")
+
+            ptg.Splitter.set_char("separator", "")
+
+            text_loader_window = ptg.Window(
+                "[bold]Load text into flashcards[/bold]",
+                "",
+                ptg.Splitter(ptg.Label(pad_string_with_spaces("File to load", 20)), text_file_input),
+                "",
+                ptg.Splitter(save_btn, cancel_btn),
+                "",
+                loading_status,
+                "",
+                "[dim]S: Save | Q: Close[/dim]",
+                width=70,
+                is_noblur=True,
+            ).center()
+            
+            text_loader_window.styles.border = ""
+            
+            text_loader_window.bind("Q", lambda *_: manager.remove(text_loader_window))
+            text_loader_window.bind("S", lambda *_: save_text_loader())
+
+            manager.add(text_loader_window)
 
         def open_settings():
             native_input = ptg.InputField(SETTINGS['native_lang']['code'])
@@ -230,7 +377,7 @@ def main() -> None:
             manager.add(settings_window)
 
         window.bind("?", lambda *_: open_settings())
-
+        window.bind("L", lambda *_: open_text_loader())
 
 if __name__ == "__main__":
     if os.path.exists(OUTPUT_FILE):
