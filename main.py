@@ -21,7 +21,7 @@ logo_string = """
  ██  ▀▀██   ██       ▄██▀▀▀██  ██ ██ ██  ██    ██    ██      ██    ██  ██    ██ 
   ██▄▄▄██   ██       ██▄▄▄███  ██ ██ ██  ▀██▄▄██▀    ██▄▄▄   ██    ██  ▀██▄▄██▀ 
     ▀▀▀▀    ▀▀        ▀▀▀▀ ▀▀  ▀▀ ▀▀ ▀▀    ▀▀▀▀       ▀▀▀▀   ▀▀    ▀▀    ▀▀▀▀   
-                                                                                 
+                                                                                  
 
 """
 
@@ -36,6 +36,22 @@ FILE_TO_LOAD = "enter .txt file path"
 
 engine = create_engine('sqlite:///evolving_cards.db')
 Session = sessionmaker(bind=engine)
+
+OUTPUT_FILE = "words.txt"
+
+all_cards = []
+left_ids = []
+right_ids = []
+words_left = []
+words_right = []
+left_keys = []
+right_keys = []
+cards_left = []
+cards_right = []
+left_container = None
+right_container = None
+selected_left = None
+selected_right = None
 
 def sync_settings_to_db():
     session = Session()
@@ -78,11 +94,11 @@ def get_random_word() -> str:
 def pad_string_with_spaces(string: str, max_len: int = 20) -> str:
     return string + " " * (max_len - len(string)) 
 
-def hex_to_rgb(hex_color: str) -> tuple[int, int, int]:
+def hex_to_rgb(hex_color: str):
     hex_color = hex_color.lstrip('#')
     return tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
 
-def invert_color(r: int, g: int, b: int) -> tuple[int, int, int]:
+def invert_color(r: int, g: int, b: int):
     return (255 - r, 255 - g, 255 - b)
 
 def color_preview(hex_color: str, text: str = "Preview") -> str:
@@ -90,123 +106,141 @@ def color_preview(hex_color: str, text: str = "Preview") -> str:
     ir, ig, ib = invert_color(r, g, b)
     return f"[{ir};{ig};{ib} @{r};{g};{b}]{text}[/]"
 
-def get_words_from_db() -> list[str]:
-    session = Session()
-    cards = session.query(Card).all()
-    session.close()
-    return [card.word for card in cards]
-
-def get_random_word() -> str:
-    words = get_words_from_db()
-    if not words:
-        return "N/A"
-    return random.choice(words)
-
-OUTPUT_FILE = "words.txt"
-
 def write_word(word: str) -> None:
     with open(OUTPUT_FILE, "a") as f:
         f.write(word + "\n")
 
-def make_handler(word: str, container: 'ptg.Container', index: int):
+def make_handler(word: str, container: 'ptg.Container | None', index: int):
     def handler(*args):
         write_word(word)
         if container is not None:
             container.select(index)
     return handler
 
+def update_card_words():
+    global all_cards, left_ids, right_ids, words_left, words_right
+    
+    session = Session()
+    all_cards = session.query(Card).all()
+    session.close()
+
+    if not all_cards:
+        words_left = [pad_string_with_spaces("N/A") for _ in range(5)]
+        words_right = [pad_string_with_spaces("N/A") for _ in range(5)]
+        left_ids = [None] * 5
+        right_ids = [None] * 5
+    else:
+        selected_cards = random.sample(all_cards, min(5, len(all_cards)))
+
+        left_pairs = [(card.id, card.translation) for card in selected_cards]
+        random.shuffle(left_pairs)
+        left_ids = [p[0] for p in left_pairs]
+        translations_left = [p[1] for p in left_pairs]
+
+        right_pairs = [(card.id, card.word) for card in selected_cards]
+        random.shuffle(right_pairs)
+        right_ids = [p[0] for p in right_pairs]
+        words_right_orig = [p[1] for p in right_pairs]
+
+        words_left = [pad_string_with_spaces(t) for t in translations_left]
+        words_right = [pad_string_with_spaces(w) for w in words_right_orig]
+
+    return words_left, words_right, left_ids, right_ids
+
+def make_left_handler(idx: int):
+    def handler(*args):
+        global selected_left, selected_right
+        selected_left = idx
+        if left_container:
+            left_container.select(idx)
+        if selected_right is not None:
+            if left_ids[idx] == right_ids[selected_right]:
+                STATUS.value = "[green]SUCCESS![/]"
+                selected_left = None
+                selected_right = None
+            else:
+                STATUS.value = "[red]Try again![/]"
+    return handler
+
+def make_right_handler(idx: int):
+    def handler(*args):
+        global selected_left, selected_right
+        selected_right = idx
+        if right_container:
+            right_container.select(idx)
+        if selected_left is not None:
+            if right_ids[idx] == left_ids[selected_left]:
+                STATUS.value = "[green]SUCCESS![/]"
+                selected_left = None
+                selected_right = None
+            else:
+                STATUS.value = "[red]Try again![/]"
+    return handler
+
+def refresh_card_buttons():
+    global cards_left, cards_right
+    
+    cards_left = []
+    for i, word_left in enumerate(words_left):
+        index_style = f'[{COLORS["left_index"]["foreground"]}]{COLORS["left_index"]["bold"] and "[bold]" or ""}{left_keys[i]}[/bold]'
+        word_style = f'{word_left}'
+        btn = ptg.Button(f"{index_style}: {word_style}", make_handler(word_left, left_container, i))
+        cards_left.append(btn)
+
+    cards_right = []
+    for i, word_right in enumerate(words_right):
+        index_style = f'[{COLORS["right_index"]["foreground"]}]{COLORS["right_index"]["bold"] and "[bold]" or ""}{right_keys[i]}[/bold]'
+        word_style = f'{word_right}'
+        btn = ptg.Button(f"{index_style}: {word_style}", make_handler(word_right, right_container, i))
+        cards_right.append(btn)
+
+    if left_container:
+        for i, btn in enumerate(cards_left):
+            left_container.bind(left_keys[i], make_left_handler(i))
+
+    if right_container:
+        for i, btn in enumerate(cards_right):
+            right_container.bind(right_keys[i], make_right_handler(i))
+
+def rebuild_containers():
+    global left_container, right_container
+    left_header = ptg.Label(f"[{COLORS['left_header']['foreground']}]{COLORS['left_header']['bold'] and '[bold]' or ''}Native[/bold]\n")
+    right_header = ptg.Label(f"[{COLORS['right_header']['foreground']}]{COLORS['right_header']['bold'] and '[bold]' or ''}Learning[/bold]\n")
+    left_container = ptg.Container(left_header, "",)
+    right_container = ptg.Container(right_header, "",)
+    for btn in cards_left:
+        left_container += btn
+    for btn in cards_right:
+        right_container += btn
+    left_container += ptg.Label("")
+    right_container += ptg.Label("")
+    refresh_card_buttons()
+
 def main() -> None:
+    global left_keys, right_keys, left_container, right_container, selected_left, selected_right
+    
     with ptg.WindowManager() as manager:
-        session = Session()
-        all_cards = session.query(Card).all()
-        session.close()
-
-        if not all_cards:
-            words_left = [pad_string_with_spaces("N/A") for _ in range(5)]
-            words_right = [pad_string_with_spaces("N/A") for _ in range(5)]
-            translations_left = ["N/A"] * 5
-            words_right_orig = ["N/A"] * 5
-            left_ids = [None] * 5
-            right_ids = [None] * 5
-        else:
-            selected_cards = random.sample(all_cards, min(5, len(all_cards)))
-
-            left_pairs = [(card.id, card.translation) for card in selected_cards]
-            random.shuffle(left_pairs)
-            left_ids = [p[0] for p in left_pairs]
-            translations_left = [p[1] for p in left_pairs]
-
-            right_pairs = [(card.id, card.word) for card in selected_cards]
-            random.shuffle(right_pairs)
-            right_ids = [p[0] for p in right_pairs]
-            words_right_orig = [p[1] for p in right_pairs]
-
-            words_left = [pad_string_with_spaces(t) for t in translations_left]
-            words_right = [pad_string_with_spaces(w) for w in words_right_orig]
+        update_card_words()
         
         left_keys = [SETTINGS["left_keys"][f"key_{i}"] for i in range(1, 6)]
         right_keys = [SETTINGS["right_keys"][f"key_{i}"] for i in range(1, 6)]
 
-        cards_left= []
-        for i, word_left in enumerate(words_left):
-            index_style = f'[{COLORS["left_index"]["foreground"]}]{COLORS["left_index"]["bold"] and "[bold]" or ""}{left_keys[i]}[/bold]'
-            word_style = f'{word_left}'
-            btn = ptg.Button(f"{index_style}: {word_style}", make_handler(word_left, None, i))
-            cards_left.append(btn)
+        selected_left = None
+        selected_right = None
 
-        cards_right = []
-        for i, word_right in enumerate(words_right):
-            index_style = f'[{COLORS["right_index"]["foreground"]}]{COLORS["right_index"]["bold"] and "[bold]" or ""}{right_keys[i]}[/bold]'
-            word_style = f'{word_right}'
-            btn = ptg.Button(f"{index_style}: {word_style}", make_handler(word_right, None, i))
-            cards_right.append(btn)
-
-        left_container = ptg.Container(
-            f"[{COLORS['left_header']['foreground']}]{COLORS['left_header']['bold'] and '[bold]' or ''}Native[/bold]\n",
-            *cards_left,
-            "",
-        )
-
-        right_container = ptg.Container(
-            f"[{COLORS['right_header']['foreground']}]{COLORS['right_header']['bold'] and '[bold]' or ''}Learning[/bold]\n",
-            *cards_right,
-            "",
-        )
-
-        selected_left = [None]
-        selected_right = [None]
-
-        def make_left_handler(idx):
-            def handler(*args):
-                selected_left[0] = idx
-                left_container.select(idx)
-                if selected_right[0] is not None:
-                    if left_ids[idx] == right_ids[selected_right[0]]:
-                        STATUS.value = "[green]SUCCESS![/]"
-                        selected_left[0] = None
-                        selected_right[0] = None
-                    else:
-                        STATUS.value = "[red]Try again![/]"
-            return handler
-
-        def make_right_handler(idx):
-            def handler(*args):
-                selected_right[0] = idx
-                right_container.select(idx)
-                if selected_left[0] is not None:
-                    if right_ids[idx] == left_ids[selected_left[0]]:
-                        STATUS.value = "[green]SUCCESS![/]"
-                        selected_left[0] = None
-                        selected_right[0] = None
-                    else:
-                        STATUS.value = "[red]Try again![/]"
-            return handler
-
-        for i, btn in enumerate(cards_left):
-            left_container.bind(left_keys[i], make_left_handler(i))
-
-        for i, btn in enumerate(cards_right):
-            right_container.bind(right_keys[i], make_right_handler(i))
+        left_header = ptg.Label(f"[{COLORS['left_header']['foreground']}]{COLORS['left_header']['bold'] and '[bold]' or ''}Native[/bold]\n")
+        right_header = ptg.Label(f"[{COLORS['right_header']['foreground']}]{COLORS['right_header']['bold'] and '[bold]' or ''}Learning[/bold]\n")
+        left_container = ptg.Container(left_header, "",)
+        right_container = ptg.Container(right_header, "",)
+        
+        refresh_card_buttons()
+        
+        for btn in cards_left:
+            left_container += btn
+        for btn in cards_right:
+            right_container += btn
+        left_container += ptg.Label("")
+        right_container += ptg.Label("")
 
         splitter = ptg.Splitter(
             left_container,
@@ -251,9 +285,8 @@ def main() -> None:
                         continue
                     try:
                         translation = translate(word, SETTINGS['learning_lang']['code'], SETTINGS['native_lang']['code'])
-                        translation = strip_punctuation(translation)[0] if strip_punctuation(translation) else translation
-                        if translation.lower() == word:
-                            print(f"Skipping '{word}': translation same as word")
+                        if translation.lower() == word or len(strip_punctuation(translation)) == 0:
+                            loading_status.value=f"Skipping '{word}'"
                             continue
                         card = Card(
                             word=word,
@@ -266,13 +299,17 @@ def main() -> None:
                         session.rollback()
                         session.close()
                         loading_status.value = "[red]Interrupted"
-                        print("Load interrupted by user")
                         return
                     except Exception as e:
-                        print(f"Failed to translate '{word}': {e}")
+                        loading_status.value=f"Failed to translate '{word}': {e}"
                 session.commit()
                 session.close()
                 loading_status.value = f"[green]Loaded {len(unique_words)} words!"
+                
+                update_card_words()
+                refresh_card_buttons()
+                rebuild_containers()
+                
                 manager.remove(text_loader_window)
 
             save_btn = ptg.Button("[bold]Save[/bold]", save_text_loader)
