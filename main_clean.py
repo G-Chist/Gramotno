@@ -113,13 +113,14 @@ class Game:
     def __init__(self):
         self.clicks = 0
         self.clicks_label = ptg.Label(f"Clicks: {self.clicks}")
+        self.button = ptg.Button(f"Click me!", lambda *_: self.button_handler()) 
         self.window = ptg.Window(logo_string,
                                  "",
                                  STATUS,
                                  "",
                                  get_random_word(),
                                  "",
-                                 ptg.Button(f"Click me!", lambda *_: self.button_handler()),
+                                 self.button,
                                  "",
                                  self.clicks_label,
                                  "",
@@ -129,6 +130,7 @@ class Game:
 
     def button_handler(self):
         self.clicks += 1
+        self.button.label = f"Dude {self.clicks}"
         self.clicks_label.value = f"Clicks: {self.clicks}" 
  
 def main() -> None:
