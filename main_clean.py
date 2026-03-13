@@ -25,8 +25,6 @@ logo_string = """
 
 """
 
-STATES = ["IDLE", "LOADING_WORDS", "PLAYING", "SUCCESS", "FAILURE"]
-
 with open("settings/settings.toml", "rb") as f:
     SETTINGS = tomllib.load(f)
 
@@ -110,17 +108,29 @@ def write_word(word: str) -> None:
     with open(OUTPUT_FILE, "a") as f:
         f.write(word + "\n")
 
-
 class Game:
+
     def __init__(self):
+        self.clicks = 0
+        self.clicks_label = ptg.Label(f"Clicks: {self.clicks}")
         self.window = ptg.Window(logo_string,
                                  "",
                                  STATUS,
+                                 "",
+                                 get_random_word(),
+                                 "",
+                                 ptg.Button(f"Click me!", lambda *_: self.button_handler()),
+                                 "",
+                                 self.clicks_label,
                                  "",
                                  width=int(ptg.terminal.width),
                                  height=int(ptg.terminal.height*0.8),
                                  ).center()
 
+    def button_handler(self):
+        self.clicks += 1
+        self.clicks_label.value = f"Clicks: {self.clicks}" 
+ 
 def main() -> None:
     with ptg.WindowManager() as manager:
         game = Game()
