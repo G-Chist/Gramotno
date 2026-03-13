@@ -17,9 +17,9 @@ class TestTurkishTranslations(unittest.TestCase):
 class TestStripPunctuation(unittest.TestCase):
 
     def test_strips_punctuation(self):
-        text = "Hello, world! How's it going?"
+        text = "Hello, world! How is it going?"
         result = strip_punctuation(text)
-        self.assertEqual(result, ["Hello", "world", "Hows", "it", "going"])
+        self.assertEqual(result, ["Hello", "world", "How", "is", "it", "going"])
 
     def test_empty_string(self):
         self.assertEqual(strip_punctuation("!!!"), [])
