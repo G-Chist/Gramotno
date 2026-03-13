@@ -48,8 +48,6 @@ left_keys = []
 right_keys = []
 cards_left = []
 cards_right = []
-left_container = None
-right_container = None
 selected_left = None
 selected_right = None
 
@@ -116,6 +114,39 @@ def make_handler(word: str, container: 'ptg.Container | None', index: int):
         if container is not None:
             container.select(index)
     return handler
+
+def save_text_loader(file_path: str):
+    loading_status.value = "[bold]Loading...[/bold]"
+
+    with open(file_path, "r", encoding="utf-8") as f:
+        content = f.read()
+
+    words = [w.lower() for w in strip_punctuation(content)]
+    unique_words = list(set(words))
+
+    session = Session()
+    for word in unique_words:
+        if not word or not word.isalpha():
+            continue
+        if session.query(Card).filter_by(word=word).first():
+            continue
+        try:
+            translation = translate(word, SETTINGS['learning_lang']['code'], SETTINGS['native_lang']['code'])
+            if translation.lower() == word or len(strip_punctuation(translation)) == 0:
+                continue
+            card = Card(
+                word=word,
+                translation=translation,
+                source_lang=SETTINGS['learning_lang']['code'],
+                target_lang=SETTINGS['native_lang']['code']
+            )
+            session.add(card)
+        except KeyboardInterrupt:
+            session.rollback()
+            session.close()
+            return
+    session.commit()
+    session.close()
 
 def update_card_words():
     global all_cards, left_ids, right_ids, words_left, words_right
