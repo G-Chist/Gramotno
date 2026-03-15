@@ -114,19 +114,43 @@ class Game:
         self.clicks = 0
         self.clicks_label = ptg.Label(f"Clicks: {self.clicks}")
         self.button = ptg.Button(f"Click me!", lambda *_: self.button_handler()) 
-        self.window = ptg.Window(logo_string,
-                                 "",
-                                 STATUS,
-                                 "",
-                                 get_random_word(),
-                                 "",
-                                 self.button,
-                                 "",
-                                 self.clicks_label,
-                                 "",
-                                 width=int(ptg.terminal.width),
-                                 height=int(ptg.terminal.height*0.8),
-                                 ).center()
+        
+        left_header = ptg.Label(f"[{COLORS['left_header']['foreground']}]{COLORS['left_header']['bold'] and '[bold]' or ''}Native[/bold]\n")
+        right_header = ptg.Label(f"[{COLORS['right_header']['foreground']}]{COLORS['right_header']['bold'] and '[bold]' or ''}Learning[/bold]\n")
+        
+        left_container = ptg.Container(
+            left_header,
+            "",
+            STATUS,
+            "",
+            get_random_word(),
+        )
+        right_container = ptg.Container(
+            right_header,
+            "",
+            self.button,
+            "",
+            self.clicks_label,
+        )
+        
+        splitter = ptg.Splitter(
+            left_container,
+            right_container,
+        )
+        splitter.chars["separator"] = ""
+        
+        self.window = ptg.Window(
+            logo_string,
+            "",
+            splitter,
+            "",
+            width=int(ptg.terminal.width),
+            height=int(ptg.terminal.height*0.8),
+            is_noblur=True,
+        ).center()
+        self.window.styles.border = ""
+        
+        right_container.bind("1", lambda *_: self.button_handler())
 
     def button_handler(self):
         self.clicks += 1
