@@ -1,13 +1,13 @@
 === Game Initialization Debug ===
-return_to_menu: <function MainMenu.open_game.<locals>.<lambda> at 0x7851cf33b130>
-wordpicker.cards: [<models.schema.Card object at 0x7851cf377130>, <models.schema.Card object at 0x7851cf3774f0>, <models.schema.Card object at 0x7851cf377520>, <models.schema.Card object at 0x7851cf377550>, <models.schema.Card object at 0x7851cf377580>, <models.schema.Card object at 0x7851cf3774c0>, <models.schema.Card object at 0x7851cf3775e0>, <models.schema.Card object at 0x7851cf377640>, <models.schema.Card object at 0x7851cf3776a0>, <models.schema.Card object at 0x7851cf377700>, <models.schema.Card object at 0x7851cf377760>, <models.schema.Card object at 0x7851cf3777c0>, <models.schema.Card object at 0x7851cf377820>, <models.schema.Card object at 0x7851cf377880>, <models.schema.Card object at 0x7851cf3778e0>, <models.schema.Card object at 0x7851cf377940>, <models.schema.Card object at 0x7851cf3779a0>, <models.schema.Card object at 0x7851cf377a00>]
-wordpicker.five_cards: [<models.schema.Card object at 0x7851cf3778e0>, <models.schema.Card object at 0x7851cf377130>, <models.schema.Card object at 0x7851cf377640>, <models.schema.Card object at 0x7851cf377940>, <models.schema.Card object at 0x7851cf377580>]
-wordpicker.native_words: [('freezes', 17), ('my blood', 1), ('lightning', 8), ('to my power', 5), ("I've seen", 18)]
-wordpicker.learning_words: [('şimşek', 8), ('gücüme', 5), ('kanım', 1), ('donar', 17), ('ne', 18)]
-words_left: ['freezes', 'my blood', 'lightning', 'to my power', "I've seen"]
-words_right: ['şimşek', 'gücüme', 'kanım', 'donar', 'ne']
-ids_left: [17, 1, 8, 5, 18]
-ids_right: [8, 5, 1, 17, 18]
+return_to_menu: <function MainMenu.open_game.<locals>.<lambda> at 0x760050687250>
+wordpicker.cards: [<models.schema.Card object at 0x7600506c7100>, <models.schema.Card object at 0x7600506c74c0>, <models.schema.Card object at 0x7600506c74f0>, <models.schema.Card object at 0x7600506c7520>, <models.schema.Card object at 0x7600506c7550>, <models.schema.Card object at 0x7600506c7490>, <models.schema.Card object at 0x7600506c75b0>, <models.schema.Card object at 0x7600506c7610>, <models.schema.Card object at 0x7600506c7670>, <models.schema.Card object at 0x7600506c76d0>, <models.schema.Card object at 0x7600506c7730>, <models.schema.Card object at 0x7600506c7790>, <models.schema.Card object at 0x7600506c77f0>, <models.schema.Card object at 0x7600506c7850>, <models.schema.Card object at 0x7600506c78b0>, <models.schema.Card object at 0x7600506c7910>, <models.schema.Card object at 0x7600506c7970>, <models.schema.Card object at 0x7600506c79d0>]
+wordpicker.five_cards: [<models.schema.Card object at 0x7600506c7730>, <models.schema.Card object at 0x7600506c74c0>, <models.schema.Card object at 0x7600506c7520>, <models.schema.Card object at 0x7600506c7100>, <models.schema.Card object at 0x7600506c7850>]
+wordpicker.native_words: [('though', 4), ('snip', 2), ('verbally', 16), ('adds', 12), ('my blood', 1)]
+wordpicker.learning_words: [('katar', 12), ('kopar', 2), ('sözüyle', 16), ('kanım', 1), ('olsa', 4)]
+words_left: ['though', 'snip', 'verbally', 'adds', 'my blood']
+words_right: ['katar', 'kopar', 'sözüyle', 'kanım', 'olsa']
+ids_left: [4, 2, 16, 12, 1]
+ids_right: [12, 2, 16, 1, 4]
 selected_left: None
 selected_right: None
 left_keys: ['1', '2', '3', '4', '5']
