@@ -64,17 +64,17 @@ def reload_settings():
         SETTINGS = tomllib.load(f)
     COLORS = SETTINGS
 
-def get_words_from_db() -> list[str]:
+def get_cards_from_db() -> list[str]:
     session = Session()
     cards = session.query(Card).all()
     session.close()
-    return [card.word for card in cards]
+    return cards
 
-def get_random_word() -> str:
-    words = get_words_from_db()
-    if not words:
+def get_random_card() -> str:
+    cards = get_cards_from_db()
+    if not cards:
         return "N/A"
-    return random.choice(words)
+    return random.choice(cards)
 
 def pad_string_with_spaces(string: str, max_len: int = 20) -> str:
     return string + " " * (max_len - len(string)) 
@@ -158,8 +158,6 @@ class Game:
             right_container.bind(self.right_keys[i], lambda *_, idx=i: self.right_button_handler(idx))
 
         self.window = ptg.Window(
-            logo_string,
-            "",
             splitter,
             "",
             self.status,
