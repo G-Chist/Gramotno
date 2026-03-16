@@ -30,26 +30,12 @@ with open("settings/settings.toml", "rb") as f:
 
 COLORS = SETTINGS
 
-STATUS = ptg.Label("[dim]Please load words![/dim]")
-
 FILE_TO_LOAD = "enter .txt file path"
 
 engine = create_engine('sqlite:///evolving_cards.db')
 Session = sessionmaker(bind=engine)
 
 OUTPUT_FILE = "words.txt"
-
-all_cards = []
-left_ids = []
-right_ids = []
-words_left = []
-words_right = []
-left_keys = []
-right_keys = []
-cards_left = []
-cards_right = []
-selected_left = None
-selected_right = None
 
 def sync_settings_to_db():
     session = Session()
@@ -111,24 +97,50 @@ def write_word(word: str) -> None:
 class Game:
 
     def __init__(self):
+        self.all_cards = []
+        self.left_ids = []
+        self.right_ids = []
+        self.words_left = []
+        self.words_right = []
+        self.left_keys = []
+        self.right_keys = []
+        self.cards_left = []
+        self.cards_right = []
+        self.selected_left = None
+        self.selected_right = None
+        self.status = ptg.Label("[dim]Please load words![/dim]")
+
         self.clicks = 0
         self.clicks_label = ptg.Label(f"Clicks: {self.clicks}")
         self.button = ptg.Button(f"Click me!", lambda *_: self.button_handler()) 
+
+        self.left_keys = [SETTINGS['left_keys'][f'key_{i}'] for i in range(1, 6)]
+        self.right_keys = [SETTINGS['right_keys'][f'key_{i}'] for i in range(1, 6)]
         
+        self.left_buttons = []
+        for key in self.left_keys:
+            btn = ptg.Button(pad_string_with_spaces(f"{key})"))
+            self.left_buttons.append(btn)
+
+        self.right_buttons = []
+        for key in self.right_keys:
+            btn = ptg.Button(pad_string_with_spaces(f"{key})"))
+            self.right_buttons.append(btn)
+
         left_header = ptg.Label(f"[{COLORS['left_header']['foreground']}]{COLORS['left_header']['bold'] and '[bold]' or ''}Native[/bold]\n")
         right_header = ptg.Label(f"[{COLORS['right_header']['foreground']}]{COLORS['right_header']['bold'] and '[bold]' or ''}Learning[/bold]\n")
         
         left_container = ptg.Container(
             left_header,
             "",
-            STATUS,
+            *self.left_buttons,
             "",
             get_random_word(),
         )
         right_container = ptg.Container(
             right_header,
             "",
-            self.button,
+            *self.right_buttons,
             "",
             self.clicks_label,
         )
@@ -138,24 +150,36 @@ class Game:
             right_container,
         )
         splitter.chars["separator"] = ""
-        
+
+        for i, btn in enumerate(self.left_buttons):
+            left_container.bind(self.left_keys[i], lambda *_, idx=i: self.left_button_handler(idx))
+
+        for i, btn in enumerate(self.right_buttons):
+            right_container.bind(self.right_keys[i], lambda *_, idx=i: self.right_button_handler(idx))
+
         self.window = ptg.Window(
             logo_string,
             "",
             splitter,
+            "",
+            self.status,
             "",
             width=int(ptg.terminal.width),
             height=int(ptg.terminal.height*0.8),
             is_noblur=True,
         ).center()
         self.window.styles.border = ""
-        
-        right_container.bind("1", lambda *_: self.button_handler())
 
     def button_handler(self):
         self.clicks += 1
         self.button.label = f"Dude {self.clicks}"
-        self.clicks_label.value = f"Clicks: {self.clicks}" 
+        self.clicks_label.value = f"Clicks: {self.clicks}"
+
+    def left_button_handler(self, index):
+        print(f"Left button {index + 1} pressed")
+
+    def right_button_handler(self, index):
+        print(f"Right button {index + 1} pressed") 
  
 def main() -> None:
     with ptg.WindowManager() as manager:
