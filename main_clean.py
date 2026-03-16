@@ -95,6 +95,38 @@ def write_word(word: str) -> None:
     with open(OUTPUT_FILE, "a") as f:
         f.write(word + "\n")
 
+class WordPicker:
+
+    def __init__(self):
+        self.cards = []
+        self.native_words = []
+        self.learning_words = []
+        self.five_cards = []
+
+    def get_cards(self):
+        self.cards = get_cards_from_db()
+
+    def get_random_card(self):
+        if not self.cards:
+            self.get_cards()
+        if not self.cards:
+            return None
+        return random.choice(self.cards)
+
+    def get_random_5_cards(self):
+        if not self.cards:
+            self.get_cards()
+        if not self.cards:
+            return []
+        self.five_cards = random.sample(self.cards, min(5, len(self.cards)))
+        return self.five_cards
+    
+    def fill_native_words(self):
+        self.native_words = [card.translation for card in self.five_cards]
+
+    def fill_learning_words(self):
+        self.learning_words = [card.word for card in self.five_cards]
+
 class Game:
 
     def __init__(self, return_to_menu=None):
