@@ -268,12 +268,87 @@ class TextLoader:
         session.close()
         self.status.value = f"[green]Loaded {loaded_count} words!"
 
- 
+class Settings:
+
+    def __init__(self):
+        self.native_input = ptg.InputField(SETTINGS['native_lang']['code'])
+        self.learning_input = ptg.InputField(SETTINGS['learning_lang']['code'])
+        
+        self.left_idx_input = ptg.InputField(SETTINGS['left_index']['foreground'])
+        self.right_idx_input = ptg.InputField(SETTINGS['right_index']['foreground'])
+        self.left_hdr_input = ptg.InputField(SETTINGS['left_header']['foreground'])
+        self.right_hdr_input = ptg.InputField(SETTINGS['right_header']['foreground'])
+
+        self.left_idx_preview = ptg.Label(color_preview(SETTINGS['left_index']['foreground']))
+        self.right_idx_preview = ptg.Label(color_preview(SETTINGS['right_index']['foreground']))
+        self.left_hdr_preview = ptg.Label(color_preview(SETTINGS['left_header']['foreground']))
+        self.right_hdr_preview = ptg.Label(color_preview(SETTINGS['right_header']['foreground']))
+
+        self.status = ptg.Label("[dim]See settings/settings.toml for more[/dim]")
+
+        self.update_btn = ptg.Button("Update Preview", lambda *_: self.update_previews())
+        self.save_btn = ptg.Button("[bold]Save[/bold]", lambda *_: self.save_handler())
+
+        self.left_idx_input.bind("enter", lambda *_: self.update_previews())
+        self.right_idx_input.bind("enter", lambda *_: self.update_previews())
+        self.left_hdr_input.bind("enter", lambda *_: self.update_previews())
+        self.right_hdr_input.bind("enter", lambda *_: self.update_previews())
+
+        ptg.Splitter.set_char("separator", "")
+
+        self.window = ptg.Window(
+            "[bold]Settings[/bold]",
+            "",
+            ptg.Container("[bold]Languages[/bold]", box="EMPTY"),
+            "",
+            ptg.Splitter(ptg.Label(pad_string_with_spaces("Native", 15)), self.native_input),
+            ptg.Splitter(ptg.Label(pad_string_with_spaces("Learning", 15)), self.learning_input),
+            "",
+            ptg.Container("[bold]Colors[/bold]", box="EMPTY"),
+            "",
+            ptg.Splitter(ptg.Label(pad_string_with_spaces("Left index", 15)), self.left_idx_input, self.left_idx_preview),
+            ptg.Splitter(ptg.Label(pad_string_with_spaces("Right index", 15)), self.right_idx_input, self.right_idx_preview),
+            ptg.Splitter(ptg.Label(pad_string_with_spaces("Left header", 15)), self.left_hdr_input, self.left_hdr_preview),
+            ptg.Splitter(ptg.Label(pad_string_with_spaces("Right header", 15)), self.right_hdr_input, self.right_hdr_preview),
+            "",
+            ptg.Splitter(self.update_btn, self.save_btn),
+            "",
+            self.status,
+            "",
+            "[dim]U: Update preview | S: Save | Ctrl-c: Close[/dim]",
+            width=70,
+            is_noblur=True,
+        ).center()
+        
+        self.window.styles.border = ""
+        
+        self.window.bind("U", lambda *_: self.update_previews())
+        self.window.bind("S", lambda *_: self.save_handler())
+
+    def update_previews(self, _=None):
+        self.left_idx_preview.value = color_preview(self.left_idx_input.value)
+        self.right_idx_preview.value = color_preview(self.right_idx_input.value)
+        self.left_hdr_preview.value = color_preview(self.left_hdr_input.value)
+        self.right_hdr_preview.value = color_preview(self.right_hdr_input.value)
+
+    def save_handler(self):
+        SETTINGS['native_lang']['code'] = self.native_input.value
+        SETTINGS['learning_lang']['code'] = self.learning_input.value
+        SETTINGS['left_index']['foreground'] = self.left_idx_input.value
+        SETTINGS['right_index']['foreground'] = self.right_idx_input.value
+        SETTINGS['left_header']['foreground'] = self.left_hdr_input.value
+        SETTINGS['right_header']['foreground'] = self.right_hdr_input.value
+        save_settings()
+        reload_settings()
+        self.status.value = "[green]Settings saved!"
+
+  
 def main() -> None:
     with ptg.WindowManager() as manager:
         game = Game()
         loader = TextLoader()
-        manager.add(loader.window)
+        settings = Settings()
+        manager.add(settings.window)
 
 if __name__ == "__main__":
     sync_settings_to_db()
