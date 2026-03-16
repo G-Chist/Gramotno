@@ -1,5 +1,6 @@
 import pytermgui as ptg
 import random
+import sys
 import os
 import tomli as tomllib
 import tomli_w as tomlwrite
@@ -96,7 +97,8 @@ def write_word(word: str) -> None:
 
 class Game:
 
-    def __init__(self):
+    def __init__(self, return_to_menu=None):
+        self.return_to_menu = return_to_menu
         self.all_cards = []
         self.left_ids = []
         self.right_ids = []
@@ -113,10 +115,6 @@ class Game:
             self.status = ptg.Label("[dim]Please load words![/dim]") 
         else:
             self.status = ptg.Label("[dim]Start matching![/dim]")
-
-        self.clicks = 0
-        self.clicks_label = ptg.Label(f"Clicks: {self.clicks}")
-        self.button = ptg.Button(f"Click me!", lambda *_: self.button_handler()) 
 
         self.left_keys = [SETTINGS['left_keys'][f'key_{i}'] for i in range(1, 6)]
         self.right_keys = [SETTINGS['right_keys'][f'key_{i}'] for i in range(1, 6)]
@@ -139,14 +137,12 @@ class Game:
             "",
             *self.left_buttons,
             "",
-            get_random_word(),
         )
         right_container = ptg.Container(
             right_header,
             "",
             *self.right_buttons,
             "",
-            self.clicks_label,
         )
         
         splitter = ptg.Splitter(
@@ -168,16 +164,16 @@ class Game:
             "",
             self.status,
             "",
+            "[dim]Q: Quit to menu[/dim]",
             width=int(ptg.terminal.width),
             height=int(ptg.terminal.height*0.8),
+            box="ROUNDED",
             is_noblur=True,
         ).center()
         self.window.styles.border = ""
-
-    def button_handler(self):
-        self.clicks += 1
-        self.button.label = f"Dude {self.clicks}"
-        self.clicks_label.value = f"Clicks: {self.clicks}"
+        self.window.bind("q", lambda *_: self._close())
+        self.window.bind("Q", lambda *_: self._close())
+        self.window.bind("esc", lambda *_: self._close())
 
     def left_button_handler(self, index):
         print(f"Left button {index + 1} pressed")
@@ -185,10 +181,15 @@ class Game:
     def right_button_handler(self, index):
         print(f"Right button {index + 1} pressed") 
 
+    def _close(self):
+        if self.return_to_menu:
+            self.return_to_menu()
+
 
 class TextLoader:
 
-    def __init__(self):
+    def __init__(self, return_to_menu=None):
+        self.return_to_menu = return_to_menu
         self.file_input = ptg.InputField("enter .txt file path")
         self.status = ptg.Label("[dim]Ready[/dim]")
 
@@ -208,13 +209,16 @@ class TextLoader:
             "",
             self.status,
             "",
-            "[dim]S: Save | Ctrl-c: Close[/dim]",
-            width=70,
+            "[dim]S: Save | Q: Quit to menu[/dim]",
+            width=int(ptg.terminal.width),
+            box="ROUNDED",
             is_noblur=True,
         ).center()
         self.window.styles.border = ""
 
         self.window.bind("S", lambda *_: self.save_handler())
+        self.window.bind("q", lambda *_: self._close())
+        self.window.bind("Q", lambda *_: self._close())
 
     def save_handler(self):
         file_path = self.file_input.value
@@ -268,9 +272,14 @@ class TextLoader:
         session.close()
         self.status.value = f"[green]Loaded {loaded_count} words!"
 
+    def _close(self):
+        if self.return_to_menu:
+            self.return_to_menu()
+
 class Settings:
 
-    def __init__(self):
+    def __init__(self, return_to_menu=None):
+        self.return_to_menu = return_to_menu
         self.native_input = ptg.InputField(SETTINGS['native_lang']['code'])
         self.learning_input = ptg.InputField(SETTINGS['learning_lang']['code'])
         
@@ -299,12 +308,12 @@ class Settings:
         self.window = ptg.Window(
             "[bold]Settings[/bold]",
             "",
-            ptg.Container("[bold]Languages[/bold]", box="EMPTY"),
+            ptg.Container("[bold]Languages[/bold]", box="ROUNDED"),
             "",
             ptg.Splitter(ptg.Label(pad_string_with_spaces("Native", 15)), self.native_input),
             ptg.Splitter(ptg.Label(pad_string_with_spaces("Learning", 15)), self.learning_input),
             "",
-            ptg.Container("[bold]Colors[/bold]", box="EMPTY"),
+            ptg.Container("[bold]Colors[/bold]", box="ROUNDED"),
             "",
             ptg.Splitter(ptg.Label(pad_string_with_spaces("Left index", 15)), self.left_idx_input, self.left_idx_preview),
             ptg.Splitter(ptg.Label(pad_string_with_spaces("Right index", 15)), self.right_idx_input, self.right_idx_preview),
@@ -315,8 +324,9 @@ class Settings:
             "",
             self.status,
             "",
-            "[dim]U: Update preview | S: Save | Ctrl-c: Close[/dim]",
-            width=70,
+            "[dim]U: Update preview | S: Save | Q: Quit to menu[/dim]",
+            width=int(ptg.terminal.width),
+            box="ROUNDED",
             is_noblur=True,
         ).center()
         
@@ -324,6 +334,8 @@ class Settings:
         
         self.window.bind("U", lambda *_: self.update_previews())
         self.window.bind("S", lambda *_: self.save_handler())
+        self.window.bind("q", lambda *_: self._close())
+        self.window.bind("Q", lambda *_: self._close())
 
     def update_previews(self, _=None):
         self.left_idx_preview.value = color_preview(self.left_idx_input.value)
@@ -342,13 +354,76 @@ class Settings:
         reload_settings()
         self.status.value = "[green]Settings saved!"
 
+    def _close(self):
+        if self.return_to_menu:
+            self.return_to_menu()
+
+class MainMenu:
+
+    def __init__(self, manager):
+        self.manager = manager
+
+        self.game_btn = ptg.Button(f"[bold]P[/bold]{pad_string_with_spaces('lay Game')}")
+        self.loader_btn = ptg.Button(f"[bold]T[/bold]{pad_string_with_spaces('ext Loader')}")
+        self.settings_btn = ptg.Button(f"[bold]S[/bold]{pad_string_with_spaces('ettings')}")
+        self.quit_btn = ptg.Button(f"[bold]Q[/bold]{pad_string_with_spaces('uit')}")
+
+        self.window = ptg.Window(
+            logo_string,
+            "",
+            ptg.Container(
+                "[bold]Main Menu[/bold]",
+                "",
+                self.game_btn,
+                self.loader_btn,
+                self.settings_btn,
+                "",
+                self.quit_btn,
+                box="ROUNDED",
+            ),
+            "",
+            "[dim]Made by G-Chist[/dim]",
+            width=int(ptg.terminal.width),
+            height=int(ptg.terminal.height),
+            is_noblur=True,
+        ).center()
+        self.window.styles.border = ""
+
+        self.window.bind("p", lambda *_: self.open_game())
+        self.window.bind("P", lambda *_: self.open_game())
+        self.window.bind("t", lambda *_: self.open_loader())
+        self.window.bind("T", lambda *_: self.open_loader())
+        self.window.bind("s", lambda *_: self.open_settings())
+        self.window.bind("S", lambda *_: self.open_settings())
+        self.window.bind("q", lambda *_: self.quit())
+        self.window.bind("Q", lambda *_: self.quit())
+
+    def open_game(self):
+        game = Game(return_to_menu=lambda: self._return_to_menu())
+        self.manager.add(game.window)
+
+    def open_loader(self):
+        loader = TextLoader(return_to_menu=lambda: self._return_to_menu())
+        self.manager.add(loader.window)
+
+    def open_settings(self):
+        settings = Settings(return_to_menu=lambda: self._return_to_menu())
+        self.manager.add(settings.window)
+
+    def quit(self):
+        sys.exit(0)
+
+    def _return_to_menu(self):
+        for window in list(self.manager._windows):
+            if window != self.window:
+                self.manager.remove(window)
+        self.window.focus()
   
 def main() -> None:
     with ptg.WindowManager() as manager:
-        game = Game()
-        loader = TextLoader()
-        settings = Settings()
-        manager.add(settings.window)
+        menu = MainMenu(manager)
+        manager.add(menu.window)
+        menu.window.focus()
 
 if __name__ == "__main__":
     sync_settings_to_db()
