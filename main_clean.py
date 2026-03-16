@@ -108,7 +108,11 @@ class Game:
         self.cards_right = []
         self.selected_left = None
         self.selected_right = None
-        self.status = ptg.Label("[dim]Please load words![/dim]")
+
+        if len(self.all_cards) == 0:
+            self.status = ptg.Label("[dim]Please load words![/dim]") 
+        else:
+            self.status = ptg.Label("[dim]Start matching![/dim]")
 
         self.clicks = 0
         self.clicks_label = ptg.Label(f"Clicks: {self.clicks}")
@@ -180,11 +184,96 @@ class Game:
 
     def right_button_handler(self, index):
         print(f"Right button {index + 1} pressed") 
+
+
+class TextLoader:
+
+    def __init__(self):
+        self.file_input = ptg.InputField("enter .txt file path")
+        self.status = ptg.Label("[dim]Ready[/dim]")
+
+        self.save_btn = ptg.Button("[bold]Save[/bold]", lambda *_: self.save_handler())
+
+        ptg.Splitter.set_char("separator", "")
+
+        self.window = ptg.Window(
+            "[bold]Load text into flashcards[/bold]",
+            "",
+            ptg.Splitter(
+                ptg.Label(pad_string_with_spaces("File to load", 20)),
+                self.file_input,
+            ),
+            "",
+            ptg.Splitter(self.save_btn),
+            "",
+            self.status,
+            "",
+            "[dim]S: Save | Ctrl-c: Close[/dim]",
+            width=70,
+            is_noblur=True,
+        ).center()
+        self.window.styles.border = ""
+
+        self.window.bind("S", lambda *_: self.save_handler())
+
+    def save_handler(self):
+        file_path = self.file_input.value
+        self.status.value = "[bold]Loading...[/bold]"
+
+        try:
+            with open(file_path, "r", encoding="utf-8") as f:
+                content = f.read()
+        except FileNotFoundError:
+            self.status.value = "[red]File not found"
+            return
+        except Exception as e:
+            self.status.value = f"[red]Error: {e}"
+            return
+
+        words = [w.lower() for w in strip_punctuation(content)]
+        unique_words = list(set(words))
+
+        session = Session()
+        loaded_count = 0
+        for word in unique_words:
+            if not word or not word.isalpha():
+                continue
+            if session.query(Card).filter_by(word=word).first():
+                continue
+            try:
+                translation = translate(
+                    word,
+                    SETTINGS['learning_lang']['code'],
+                    SETTINGS['native_lang']['code']
+                )
+                if translation.lower() == word or len(strip_punctuation(translation)) == 0:
+                    self.status.value = f"Skipping '{word}'"
+                    continue
+                card = Card(
+                    word=word,
+                    translation=translation,
+                    source_lang=SETTINGS['learning_lang']['code'],
+                    target_lang=SETTINGS['native_lang']['code']
+                )
+                session.add(card)
+                loaded_count += 1
+            except KeyboardInterrupt:
+                session.rollback()
+                session.close()
+                self.status.value = "[red]Interrupted"
+                return
+            except Exception as e:
+                self.status.value = f"[red]Failed: {word} - {e}"
+        session.commit()
+        session.close()
+        self.status.value = f"[green]Loaded {loaded_count} words!"
+
  
 def main() -> None:
     with ptg.WindowManager() as manager:
         game = Game()
-        manager.add(game.window)
+        loader = TextLoader()
+        manager.add(loader.window)
 
 if __name__ == "__main__":
     sync_settings_to_db()
