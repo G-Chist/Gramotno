@@ -64,13 +64,13 @@ def reload_settings():
         SETTINGS = tomllib.load(f)
     COLORS = SETTINGS
 
-def get_cards_from_db() -> list[str]:
+def get_cards_from_db():
     session = Session()
     cards = session.query(Card).all()
     session.close()
     return cards
 
-def get_random_card() -> str:
+def get_random_card():
     cards = get_cards_from_db()
     if not cards:
         return "N/A"
@@ -119,31 +119,39 @@ class WordPicker:
         if not self.cards:
             return []
         self.five_cards = random.sample(self.cards, min(5, len(self.cards)))
-        return self.five_cards
     
     def fill_native_words(self):
-        self.native_words = [card.translation for card in self.five_cards]
+        words = [(card.translation, card.id) for card in self.five_cards]
+        random.shuffle(words)
+        self.native_words = words
 
     def fill_learning_words(self):
-        self.learning_words = [card.word for card in self.five_cards]
+        words = [(card.word, card.id) for card in self.five_cards]
+        random.shuffle(words)
+        self.learning_words = words
 
 class Game:
 
     def __init__(self, return_to_menu=None):
         self.return_to_menu = return_to_menu
-        self.all_cards = []
-        self.left_ids = []
-        self.right_ids = []
-        self.words_left = []
-        self.words_right = []
-        self.left_keys = []
-        self.right_keys = []
-        self.cards_left = []
-        self.cards_right = []
+        
+        self.wordpicker = WordPicker()
+        self.wordpicker.get_cards()
+        self.wordpicker.get_random_5_cards()
+        self.wordpicker.fill_native_words()
+        self.wordpicker.fill_learning_words()
+       
+        self.words_left = [card[0] for card in self.wordpicker.native_words] or []
+        self.words_right = [card[0] for card in self.wordpicker.learning_words] or []
+        self.ids_left = [card[1] for card in self.wordpicker.native_words] if self.wordpicker.native_words else []
+        self.ids_right = [card[1] for card in self.wordpicker.learning_words] if self.wordpicker.learning_words else []
+        
         self.selected_left = None
         self.selected_right = None
 
-        if len(self.all_cards) == 0:
+        has_cards = bool(self.wordpicker.cards)
+        
+        if not has_cards:
             self.status = ptg.Label("[dim]Please load words![/dim]") 
         else:
             self.status = ptg.Label("[dim]Start matching![/dim]")
@@ -152,13 +160,15 @@ class Game:
         self.right_keys = [SETTINGS['right_keys'][f'key_{i}'] for i in range(1, 6)]
         
         self.left_buttons = []
-        for key in self.left_keys:
-            btn = ptg.Button(pad_string_with_spaces(f"{key})"))
+        for i in range(len(self.left_keys)):
+            word = self.words_left[i] if i < len(self.words_left) else ""
+            btn = ptg.Button(pad_string_with_spaces(f"{self.left_keys[i]}) {word}"))
             self.left_buttons.append(btn)
 
         self.right_buttons = []
-        for key in self.right_keys:
-            btn = ptg.Button(pad_string_with_spaces(f"{key})"))
+        for i, key in enumerate(self.right_keys):
+            word = self.words_right[i] if i < len(self.words_right) else ""
+            btn = ptg.Button(pad_string_with_spaces(f"{key}) {word}"))
             self.right_buttons.append(btn)
 
         left_header = ptg.Label(f"[{COLORS['left_header']['foreground']}]{COLORS['left_header']['bold'] and '[bold]' or ''}Native[/bold]\n")
@@ -183,12 +193,6 @@ class Game:
         )
         splitter.chars["separator"] = ""
 
-        for i, btn in enumerate(self.left_buttons):
-            left_container.bind(self.left_keys[i], lambda *_, idx=i: self.left_button_handler(idx))
-
-        for i, btn in enumerate(self.right_buttons):
-            right_container.bind(self.right_keys[i], lambda *_, idx=i: self.right_button_handler(idx))
-
         self.window = ptg.Window(
             splitter,
             "",
@@ -201,15 +205,61 @@ class Game:
             is_noblur=True,
         ).center()
         self.window.styles.border = ""
+
+        for i, btn in enumerate(self.left_buttons):
+            self.window.bind(self.left_keys[i], lambda *_, idx=i: self.left_button_handler(idx))
+
+        for i, btn in enumerate(self.right_buttons):
+            self.window.bind(self.right_keys[i], lambda *_, idx=i: self.right_button_handler(idx))
+
         self.window.bind("q", lambda *_: self._close())
         self.window.bind("Q", lambda *_: self._close())
         self.window.bind("esc", lambda *_: self._close())
 
+        with open("debug_game.txt", "w") as f:
+            f.write("=== Game Initialization Debug ===\n")
+            f.write(f"return_to_menu: {self.return_to_menu}\n")
+            f.write(f"wordpicker.cards: {self.wordpicker.cards}\n")
+            f.write(f"wordpicker.five_cards: {self.wordpicker.five_cards}\n")
+            f.write(f"wordpicker.native_words: {self.wordpicker.native_words}\n")
+            f.write(f"wordpicker.learning_words: {self.wordpicker.learning_words}\n")
+            f.write(f"words_left: {self.words_left}\n")
+            f.write(f"words_right: {self.words_right}\n")
+            f.write(f"ids_left: {self.ids_left}\n")
+            f.write(f"ids_right: {self.ids_right}\n")
+            f.write(f"selected_left: {self.selected_left}\n")
+            f.write(f"selected_right: {self.selected_right}\n")
+            f.write(f"left_keys: {self.left_keys}\n")
+            f.write(f"right_keys: {self.right_keys}\n")
+            f.write(f"left_buttons: {len(self.left_buttons)}\n")
+            f.write(f"right_buttons: {len(self.right_buttons)}\n")
+            f.write("===\n")
+
     def left_button_handler(self, index):
-        print(f"Left button {index + 1} pressed")
+        self.selected_left = self.ids_left[index]
 
     def right_button_handler(self, index):
-        print(f"Right button {index + 1} pressed") 
+        self.selected_right = self.ids_right[index]
+        
+        if self.selected_left is not None:
+            if self.selected_left == self.selected_right:
+                self.wordpicker.get_random_5_cards()
+                self.wordpicker.fill_native_words()
+                self.wordpicker.fill_learning_words()
+                self.words_left = [card[0] for card in self.wordpicker.native_words] or []
+                self.words_right = [card[0] for card in self.wordpicker.learning_words] or []
+                self.ids_left = [card[1] for card in self.wordpicker.native_words] if self.wordpicker.native_words else []
+                self.ids_right = [card[1] for card in self.wordpicker.learning_words] if self.wordpicker.learning_words else []
+                for i, btn in enumerate(self.left_buttons):
+                    btn.label = pad_string_with_spaces(f"{self.left_keys[i]}) {self.words_left[i]}")
+                for i, btn in enumerate(self.right_buttons):
+                    btn.label = pad_string_with_spaces(f"{self.right_keys[i]}) {self.words_right[i]}")
+                self.status.value = "[green]Correct! Cards updated."
+                self.selected_left = None
+                self.selected_right = None
+            else:
+                self.status.value = "[red]Incorrect! Try again."
+                self.selected_right = None 
 
     def _close(self):
         if self.return_to_menu:

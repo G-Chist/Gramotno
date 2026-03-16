@@ -1,0 +1,17 @@
+=== Game Initialization Debug ===
+return_to_menu: <function MainMenu.open_game.<locals>.<lambda> at 0x7851cf33b130>
+wordpicker.cards: [<models.schema.Card object at 0x7851cf377130>, <models.schema.Card object at 0x7851cf3774f0>, <models.schema.Card object at 0x7851cf377520>, <models.schema.Card object at 0x7851cf377550>, <models.schema.Card object at 0x7851cf377580>, <models.schema.Card object at 0x7851cf3774c0>, <models.schema.Card object at 0x7851cf3775e0>, <models.schema.Card object at 0x7851cf377640>, <models.schema.Card object at 0x7851cf3776a0>, <models.schema.Card object at 0x7851cf377700>, <models.schema.Card object at 0x7851cf377760>, <models.schema.Card object at 0x7851cf3777c0>, <models.schema.Card object at 0x7851cf377820>, <models.schema.Card object at 0x7851cf377880>, <models.schema.Card object at 0x7851cf3778e0>, <models.schema.Card object at 0x7851cf377940>, <models.schema.Card object at 0x7851cf3779a0>, <models.schema.Card object at 0x7851cf377a00>]
+wordpicker.five_cards: [<models.schema.Card object at 0x7851cf3778e0>, <models.schema.Card object at 0x7851cf377130>, <models.schema.Card object at 0x7851cf377640>, <models.schema.Card object at 0x7851cf377940>, <models.schema.Card object at 0x7851cf377580>]
+wordpicker.native_words: [('freezes', 17), ('my blood', 1), ('lightning', 8), ('to my power', 5), ("I've seen", 18)]
+wordpicker.learning_words: [('şimşek', 8), ('gücüme', 5), ('kanım', 1), ('donar', 17), ('ne', 18)]
+words_left: ['freezes', 'my blood', 'lightning', 'to my power', "I've seen"]
+words_right: ['şimşek', 'gücüme', 'kanım', 'donar', 'ne']
+ids_left: [17, 1, 8, 5, 18]
+ids_right: [8, 5, 1, 17, 18]
+selected_left: None
+selected_right: None
+left_keys: ['1', '2', '3', '4', '5']
+right_keys: ['a', 'b', 'c', 'd', 'e']
+left_buttons: 5
+right_buttons: 5
+===
