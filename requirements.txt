@@ -1,0 +1,5 @@
+pytermgui
+sqlalchemy
+tomli
+tomli-w
+translate
