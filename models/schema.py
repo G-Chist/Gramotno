@@ -34,8 +34,6 @@ class Progress(Base):
     total_attempts = Column(Integer, default=0)
     avg_response_time_ms = Column(Float)
     std_dev_response_time_ms = Column(Float)
-    last_reviewed_at = Column(DateTime)
-    next_review_at = Column(DateTime)
 
     card = relationship("Card", back_populates="progress")
 

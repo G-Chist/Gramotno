@@ -10,6 +10,7 @@ from sqlalchemy.orm import sessionmaker
 from language_logic.language_utils import strip_punctuation, translate 
 
 from models.schema import Base, UserSettings, Language, Card, Progress
+from game.stats import GameStats
 
 ALPHABET_ENG = "abcdefghijklmnopqrstuvwxyz"
 
@@ -149,6 +150,9 @@ class Game:
         self.selected_left = None
         self.selected_right = None
 
+        self.stats = GameStats()
+        self.stats.load_from_db(Session())
+
         has_cards = bool(self.wordpicker.cards)
         
         if not has_cards:
@@ -237,12 +241,14 @@ class Game:
 
     def left_button_handler(self, index):
         self.selected_left = self.ids_left[index]
+        self.stats.start_card_timer(self.selected_left)
 
     def right_button_handler(self, index):
         self.selected_right = self.ids_right[index]
         
         if self.selected_left is not None:
             if self.selected_left == self.selected_right:
+                self.stats.record_result(self.selected_left, correct=True)
                 self.wordpicker.get_random_5_cards()
                 self.wordpicker.fill_native_words()
                 self.wordpicker.fill_learning_words()
@@ -258,10 +264,12 @@ class Game:
                 self.selected_left = None
                 self.selected_right = None
             else:
+                self.stats.record_result(self.selected_left, correct=False)
                 self.status.value = "[red]Incorrect! Try again."
                 self.selected_right = None 
 
     def _close(self):
+        self.stats.persist_to_db(Session())
         if self.return_to_menu:
             self.return_to_menu()
 
