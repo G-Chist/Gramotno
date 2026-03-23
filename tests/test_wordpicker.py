@@ -104,5 +104,146 @@ class TestWordPicker(unittest.TestCase):
         
         self.assertEqual(picker.five_cards, [])
 
+    @patch('main_clean.Session')
+    def test_get_worst_cards_by_success_rate(self, mock_session_cls):
+        mock_cards = [
+            MockCard(1, "a", "a"),
+            MockCard(2, "b", "b"),
+            MockCard(3, "c", "c"),
+            MockCard(4, "d", "d"),
+        ]
+        mock_progress_1 = MagicMock()
+        mock_progress_1.card_id = 1
+        mock_progress_1.correct_count = 2
+        mock_progress_1.total_attempts = 10
+
+        mock_progress_2 = MagicMock()
+        mock_progress_2.card_id = 2
+        mock_progress_2.correct_count = 8
+        mock_progress_2.total_attempts = 10
+
+        mock_progress_3 = MagicMock()
+        mock_progress_3.card_id = 3
+        mock_progress_3.correct_count = 0
+        mock_progress_3.total_attempts = 5
+
+        mock_session = MagicMock()
+        cards_query_result = MagicMock()
+        cards_query_result.all.return_value = mock_cards
+        progress_query_result = MagicMock()
+        progress_filter_result = MagicMock()
+        progress_filter_result.all.return_value = [mock_progress_1, mock_progress_2, mock_progress_3]
+        progress_query_result.filter.return_value = progress_filter_result
+        mock_session.query.side_effect = [cards_query_result, progress_query_result]
+        mock_session_cls.return_value = mock_session
+
+        picker = WordPicker()
+        result = picker.get_worst_cards_by_success_rate(4)
+        
+        self.assertEqual([i.id for i in result], [4, 3, 1, 2])
+        self.assertEqual(len(result), 4)
+
+    @patch('main_clean.Session')
+    def test_get_worst_cards_by_response_time(self, mock_session_cls):
+        mock_cards = [
+            MockCard(1, "a", "a"),
+            MockCard(2, "b", "b"),
+            MockCard(3, "c", "c"),
+            MockCard(4, "d", "d"),
+        ]
+        mock_progress_1 = MagicMock()
+        mock_progress_1.card_id = 1
+        mock_progress_1.avg_response_time_ms = 5000.0
+
+        mock_progress_2 = MagicMock()
+        mock_progress_2.card_id = 2
+        mock_progress_2.avg_response_time_ms = 1000.0
+
+        mock_progress_3 = MagicMock()
+        mock_progress_3.card_id = 3
+        mock_progress_3.avg_response_time_ms = None
+
+        mock_session = MagicMock()
+        mock_session.query.return_value.all.side_effect = [
+            mock_cards,
+            [mock_progress_1, mock_progress_2, mock_progress_3]
+        ]
+        mock_session_cls.return_value = mock_session
+
+        picker = WordPicker()
+        result = picker.get_worst_cards_by_response_time(4)
+
+        self.assertEqual(len(result), 4)
+
+    @patch('main_clean.Session')
+    def test_get_worst_cards_combined(self, mock_session_cls):
+        mock_cards = [
+            MockCard(1, "a", "a"),
+            MockCard(2, "b", "b"),
+            MockCard(3, "c", "c"),
+            MockCard(4, "d", "d"),
+        ]
+        mock_progress_1 = MagicMock()
+        mock_progress_1.card_id = 1
+        mock_progress_1.correct_count = 1
+        mock_progress_1.total_attempts = 10
+        mock_progress_1.incorrect_count = 9
+        mock_progress_1.avg_response_time_ms = 5000.0
+
+        mock_progress_2 = MagicMock()
+        mock_progress_2.card_id = 2
+        mock_progress_2.correct_count = 9
+        mock_progress_2.total_attempts = 10
+        mock_progress_2.incorrect_count = 1
+        mock_progress_2.avg_response_time_ms = 1000.0
+
+        mock_progress_3 = MagicMock()
+        mock_progress_3.card_id = 3
+        mock_progress_3.correct_count = 5
+        mock_progress_3.total_attempts = 10
+        mock_progress_3.incorrect_count = 5
+        mock_progress_3.avg_response_time_ms = 2000.0
+
+        mock_session = MagicMock()
+        mock_session.query.return_value.all.side_effect = [
+            mock_cards,
+            [mock_progress_1, mock_progress_2, mock_progress_3]
+        ]
+        mock_session_cls.return_value = mock_session
+
+        picker = WordPicker()
+        result = picker.get_worst_cards_combined(4)
+
+        self.assertEqual(len(result), 4)
+
+    @patch('main_clean.Session')
+    def test_get_worst_5_cards(self, mock_session_cls):
+        mock_progress_1 = MagicMock()
+        mock_progress_1.card_id = 1
+        mock_progress_1.correct_count = 1
+        mock_progress_1.total_attempts = 10
+        mock_progress_1.incorrect_count = 9
+        mock_progress_1.avg_response_time_ms = 5000.0
+
+        mock_progress_2 = MagicMock()
+        mock_progress_2.card_id = 2
+        mock_progress_2.correct_count = 9
+        mock_progress_2.total_attempts = 10
+        mock_progress_2.incorrect_count = 1
+        mock_progress_2.avg_response_time_ms = 1000.0
+
+        mock_session = MagicMock()
+        mock_session.query.return_value.all.side_effect = [
+            self.mock_cards,
+            [mock_progress_1, mock_progress_2]
+        ]
+        mock_session_cls.return_value = mock_session
+
+        picker = WordPicker()
+        result = picker.get_worst_5_cards()
+
+        self.assertEqual(len(picker.five_cards), 5)
+        self.assertEqual(picker.five_cards[0].id, 1)
+
 if __name__ == '__main__':
     unittest.main()
