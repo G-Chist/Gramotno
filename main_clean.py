@@ -1,5 +1,5 @@
 """
-EvolvingCards - Interactive Language Learning Card Game
+Gramotno - Interactive Language Learning Card Game
 
 This module is the main entry point for the flashcard application. It provides
 interfaces for loading words from text files, matching words between languages,
@@ -1219,6 +1219,7 @@ class MainMenu:
         self.game_btn = ptg.Button(f"[bold]P[/bold]{pad_string_with_spaces('lay Game')}")
         self.loader_btn = ptg.Button(f"[bold]T[/bold]{pad_string_with_spaces('ext Loader')}")
         self.settings_btn = ptg.Button(f"[bold]S[/bold]{pad_string_with_spaces('ettings')}")
+        self.help_btn = ptg.Button(f"[bold]H[/bold]{pad_string_with_spaces('elp')}")
         self.quit_btn = ptg.Button(f"[bold]Q[/bold]{pad_string_with_spaces('uit')}")
 
         self.window = ptg.Window(
@@ -1230,6 +1231,7 @@ class MainMenu:
                 self.game_btn,
                 self.loader_btn,
                 self.settings_btn,
+                self.help_btn,
                 "",
                 self.quit_btn,
                 box="ROUNDED",
@@ -1248,6 +1250,9 @@ class MainMenu:
         self.window.bind("T", lambda *_: self.open_loader())
         self.window.bind("s", lambda *_: self.open_settings())
         self.window.bind("S", lambda *_: self.open_settings())
+        self.window.bind("?", lambda *_: self.open_help())
+        self.window.bind("h", lambda *_: self.open_help())
+        self.window.bind("H", lambda *_: self.open_help())
         self.window.bind("q", lambda *_: self.quit())
         self.window.bind("Q", lambda *_: self.quit())
 
@@ -1306,6 +1311,66 @@ class MainMenu:
         settings = Settings(return_to_menu=lambda: self._return_to_menu())
         self.manager.add(settings.window)
 
+    def open_help(self):
+        """
+        Opens the help/information window.
+        
+        Displays information about the application including controls
+        and basic usage instructions.
+        
+        Side effects:
+            - Creates a new window with help content
+            - Adds the window to the window manager
+        """
+        help_text = '\n'.join(pad_string_with_spaces(line, 250) for line in """
+[bold]Gramotno Help[/bold]
+
+A language learning flashcard app that helps you
+learn new words by matching them with your native language.
+
+[bold]Main Menu Controls:[/bold]
+[bold]P[/bold] - Play Game (start a matching session)
+[bold]T[/bold] - Text Loader (load words from a file)
+[bold]S[/bold] - Settings (configure languages, colors)
+[bold]H[/bold] - Help (show this menu)
+[bold]Q[/bold] - Quit application
+
+[bold]In Game:[/bold]
+- You see 5 words in your native language on the left
+- And 5 words in the language you're learning on the right
+- Press number keys (1-5) to select a word from each side
+- If they match, you get a correct point and new cards appear
+- If they don't match, try again
+- Your progress is automatically saved
+- Press [bold]Q[/bold] to quit and return to menu
+
+[bold]Tips:[/bold]
+- Load words using the Text Loader (T)
+- Go to Settings (S) to choose your native and learning languages
+- The game tracks your response time and accuracy
+- Use Q anytime to gracefully exit and save progress
+""".split('\n'))
+        help_window = ptg.Window(
+            help_text.strip(),
+            "",
+            "[dim]Press Q to close[/dim]",
+            width=int(ptg.terminal.width*0.8),
+            height=int(ptg.terminal.height*0.8),
+            box="ROUNDED",
+        ).center()
+        help_window.styles.border = ""
+        
+        def close_help(*args):
+            self.manager.remove(help_window)
+            self.manager.add(self.window)
+            self.window.focus()
+        
+        help_window.bind("q", close_help)
+        help_window.bind("Q", close_help)
+        
+        self.manager.add(help_window)
+        help_window.focus()
+
     def quit(self):
         """
         Exits the application cleanly.
@@ -1344,7 +1409,7 @@ class MainMenu:
 
 def main() -> None:
     """
-    The main entry point for the EvolvingCards application.
+    The main entry point for the Gramotno application.
     
     This function initializes the pytermgui WindowManager, creates the
     main menu, adds it to the manager, and gives it focus to begin the
