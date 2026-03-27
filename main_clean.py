@@ -641,7 +641,7 @@ class Game:
         
         self.wordpicker = WordPicker()
         self.wordpicker.get_cards()
-        self.wordpicker.get_random_5_cards()
+        self.wordpicker.get_worst_5_cards()
         self.wordpicker.fill_native_words()
         self.wordpicker.fill_learning_words()
        
