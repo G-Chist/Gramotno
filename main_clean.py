@@ -325,11 +325,35 @@ class WordPicker:
         in the self.cards attribute. After calling this method, the WordPicker
         has access to all available flashcards for selection operations.
         
+        If multiple languages are present in the database, only cards matching
+        the configured native_lang and learning_lang from settings are used.
+        
         Note:
             This does not populate five_cards, native_words, or learning_words.
             Those must be populated separately using the appropriate methods.
         """
-        self.cards = get_cards_from_db()
+        session = Session()
+        all_cards = session.query(Card).all()
+        
+        if not all_cards:
+            self.cards = []
+            session.close()
+            return
+        
+        source_langs = set(c.source_lang for c in all_cards)
+        target_langs = set(c.target_lang for c in all_cards)
+        
+        if len(source_langs) > 1 or len(target_langs) > 1:
+            native_lang = SETTINGS.get('native_lang', {}).get('code', 'en')
+            learning_lang = SETTINGS.get('learning_lang', {}).get('code', 'tr')
+            self.cards = [
+                c for c in all_cards 
+                if c.source_lang == learning_lang and c.target_lang == native_lang
+            ]
+        else:
+            self.cards = all_cards
+        
+        session.close()
 
     def get_random_card(self):
         """
@@ -413,6 +437,9 @@ class WordPicker:
         used by the spaced repetition methods to make decisions about card
         prioritization based on user performance.
         
+        If multiple languages are present in the database, only cards matching
+        the configured native_lang and learning_lang from settings are used.
+        
         Returns:
             tuple: A two-element tuple containing:
                 - list: All Card objects from the database
@@ -424,7 +451,25 @@ class WordPicker:
             processing by the public methods.
         """
         session = Session()
-        cards = session.query(Card).all()
+        all_cards = session.query(Card).all()
+        
+        if not all_cards:
+            session.close()
+            return [], {}
+        
+        source_langs = set(c.source_lang for c in all_cards)
+        target_langs = set(c.target_lang for c in all_cards)
+        
+        if len(source_langs) > 1 or len(target_langs) > 1:
+            native_lang = SETTINGS.get('native_lang', {}).get('code', 'en')
+            learning_lang = SETTINGS.get('learning_lang', {}).get('code', 'tr')
+            cards = [
+                c for c in all_cards 
+                if c.source_lang == learning_lang and c.target_lang == native_lang
+            ]
+        else:
+            cards = all_cards
+        
         card_ids = [c.id for c in cards]
         progress_records = session.query(Progress).filter(Progress.card_id.in_(card_ids)).all()
         progress_map = {p.card_id: p for p in progress_records}

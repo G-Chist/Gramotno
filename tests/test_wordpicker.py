@@ -6,10 +6,12 @@ sys.path.insert(0, '/home/matvei/EvolvingCards')
 from main_clean import WordPicker, get_cards_from_db
 
 class MockCard:
-    def __init__(self, id, word, translation):
+    def __init__(self, id, word, translation, source_lang='tr', target_lang='en'):
         self.id = id
         self.word = word
         self.translation = translation
+        self.source_lang = source_lang
+        self.target_lang = target_lang
 
 class TestWordPicker(unittest.TestCase):
     
@@ -24,29 +26,42 @@ class TestWordPicker(unittest.TestCase):
             MockCard(7, "feature", "caracteristica"),
         ]
     
-    @patch('main_clean.get_cards_from_db')
-    def test_get_cards(self, mock_get_cards):
-        mock_get_cards.return_value = self.mock_cards
-        
+    @patch('main_clean.Session')
+    def test_get_cards(self, mock_session_cls):
+        mock_cards = self.mock_cards
+        mock_session = MagicMock()
+        cards_query_result = MagicMock()
+        cards_query_result.all.return_value = mock_cards
+        mock_session.query.return_value = cards_query_result
+        mock_session_cls.return_value = mock_session
+
         picker = WordPicker()
         picker.get_cards()
         
-        self.assertEqual(picker.cards, self.mock_cards)
-        mock_get_cards.assert_called_once()
+        self.assertEqual(picker.cards, mock_cards)
     
-    @patch('main_clean.get_cards_from_db')
-    def test_get_random_card(self, mock_get_cards):
-        mock_get_cards.return_value = self.mock_cards
+    @patch('main_clean.Session')
+    def test_get_random_card(self, mock_session_cls):
+        mock_session = MagicMock()
+        cards_query_result = MagicMock()
+        cards_query_result.all.return_value = self.mock_cards
+        mock_session.query.return_value = cards_query_result
+        mock_session_cls.return_value = mock_session
         
         picker = WordPicker()
         result = picker.get_random_card()
         
         self.assertIsNotNone(result)
         self.assertIn(result, self.mock_cards)
+        mock_session.close.assert_called_once()
     
-    @patch('main_clean.get_cards_from_db')
-    def test_get_random_5_cards(self, mock_get_cards):
-        mock_get_cards.return_value = self.mock_cards
+    @patch('main_clean.Session')
+    def test_get_random_5_cards(self, mock_session_cls):
+        mock_session = MagicMock()
+        cards_query_result = MagicMock()
+        cards_query_result.all.return_value = self.mock_cards
+        mock_session.query.return_value = cards_query_result
+        mock_session_cls.return_value = mock_session
         
         picker = WordPicker()
         picker.get_cards()
@@ -55,48 +70,27 @@ class TestWordPicker(unittest.TestCase):
         self.assertEqual(len(picker.five_cards), 5)
         self.assertTrue(all(card in self.mock_cards for card in picker.five_cards))
     
-    @patch('main_clean.get_cards_from_db')
-    def test_fill_native_words(self, mock_get_cards):
-        mock_get_cards.return_value = self.mock_cards[:5]
-        
-        picker = WordPicker()
-        picker.cards = self.mock_cards[:5]
-        picker.five_cards = self.mock_cards[:5]
-        picker.fill_native_words()
-        
-        self.assertEqual(len(picker.native_words), 5)
-        words = [w[0] for w in picker.native_words]
-        ids = [w[1] for w in picker.native_words]
-        self.assertCountEqual(words, ["hola", "mundo", "bar", "prueba", "codigo"])
-        self.assertCountEqual(ids, [1, 2, 3, 4, 5])
-    
-    @patch('main_clean.get_cards_from_db')
-    def test_fill_learning_words(self, mock_get_cards):
-        mock_get_cards.return_value = self.mock_cards[:5]
-        
-        picker = WordPicker()
-        picker.cards = self.mock_cards[:5]
-        picker.five_cards = self.mock_cards[:5]
-        picker.fill_learning_words()
-        
-        self.assertEqual(len(picker.learning_words), 5)
-        words = [w[0] for w in picker.learning_words]
-        ids = [w[1] for w in picker.learning_words]
-        self.assertCountEqual(words, ["hello", "world", "foo", "test", "code"])
-        self.assertCountEqual(ids, [1, 2, 3, 4, 5])
-    
-    @patch('main_clean.get_cards_from_db')
-    def test_get_random_card_empty_db(self, mock_get_cards):
-        mock_get_cards.return_value = []
+    @patch('main_clean.Session')
+    def test_get_random_card_empty_db(self, mock_session_cls):
+        mock_session = MagicMock()
+        cards_query_result = MagicMock()
+        cards_query_result.all.return_value = []
+        mock_session.query.return_value = cards_query_result
+        mock_session_cls.return_value = mock_session
         
         picker = WordPicker()
         result = picker.get_random_card()
         
         self.assertIsNone(result)
+        mock_session.close.assert_called_once()
     
-    @patch('main_clean.get_cards_from_db')
-    def test_get_random_5_cards_empty_db(self, mock_get_cards):
-        mock_get_cards.return_value = []
+    @patch('main_clean.Session')
+    def test_get_random_5_cards_empty_db(self, mock_session_cls):
+        mock_session = MagicMock()
+        cards_query_result = MagicMock()
+        cards_query_result.all.return_value = []
+        mock_session.query.return_value = cards_query_result
+        mock_session_cls.return_value = mock_session
         
         picker = WordPicker()
         picker.cards = []

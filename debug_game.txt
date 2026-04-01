@@ -1,13 +1,13 @@
 === Game Initialization Debug ===
-return_to_menu: <function MainMenu.open_game.<locals>.<lambda> at 0x73dac14abb00>
-wordpicker.cards: [<models.schema.Card object at 0x73dac14bf590>, <models.schema.Card object at 0x73dac14bcc80>, <models.schema.Card object at 0x73dac14bf5c0>, <models.schema.Card object at 0x73dac14bf5f0>, <models.schema.Card object at 0x73dac14bf620>, <models.schema.Card object at 0x73dac14bf680>, <models.schema.Card object at 0x73dac14bf6e0>, <models.schema.Card object at 0x73dac14bf740>, <models.schema.Card object at 0x73dac14bf7a0>, <models.schema.Card object at 0x73dac14bf800>, <models.schema.Card object at 0x73dac14bf860>, <models.schema.Card object at 0x73dac14bf8c0>, <models.schema.Card object at 0x73dac14bf920>, <models.schema.Card object at 0x73dac14bf980>, <models.schema.Card object at 0x73dac14bf9e0>, <models.schema.Card object at 0x73dac14bfa40>, <models.schema.Card object at 0x73dac14bfaa0>, <models.schema.Card object at 0x73dac14bfb00>]
-wordpicker.five_cards: [<models.schema.Card object at 0x73dac14eca70>, <models.schema.Card object at 0x73dac14ecd10>, <models.schema.Card object at 0x73dac14ecb90>, <models.schema.Card object at 0x73dac14ecd70>, <models.schema.Card object at 0x73dac14ecf50>]
-wordpicker.native_words: [('in the eyes of', 11), ('power', 3), ('what', 18), ('at the moment', 6), ('adds', 12)]
-wordpicker.learning_words: [('ne', 18), ('güç', 3), ('anda', 6), ('nazarında', 11), ('katar', 12)]
-words_left: ['in the eyes of', 'power', 'what', 'at the moment', 'adds']
-words_right: ['ne', 'güç', 'anda', 'nazarında', 'katar']
-ids_left: [11, 3, 18, 6, 12]
-ids_right: [18, 3, 6, 11, 12]
+return_to_menu: <function MainMenu.open_game.<locals>.<lambda> at 0x7ea56debe2a0>
+wordpicker.cards: [<models.schema.Card object at 0x7ea56dd83ad0>, <models.schema.Card object at 0x7ea56dd83b00>, <models.schema.Card object at 0x7ea56dd83b30>, <models.schema.Card object at 0x7ea56dd83b90>, <models.schema.Card object at 0x7ea56dd83bf0>, <models.schema.Card object at 0x7ea56dd83c50>, <models.schema.Card object at 0x7ea56dd83cb0>, <models.schema.Card object at 0x7ea56dd83d10>, <models.schema.Card object at 0x7ea56dd83d70>, <models.schema.Card object at 0x7ea56dd83dd0>, <models.schema.Card object at 0x7ea56dd83e30>, <models.schema.Card object at 0x7ea56dd83e90>, <models.schema.Card object at 0x7ea56dd83ef0>, <models.schema.Card object at 0x7ea56dd83f50>, <models.schema.Card object at 0x7ea56dd83fb0>, <models.schema.Card object at 0x7ea56dd98050>, <models.schema.Card object at 0x7ea56dd980b0>, <models.schema.Card object at 0x7ea56dd98110>, <models.schema.Card object at 0x7ea56dd98170>, <models.schema.Card object at 0x7ea56dd981d0>, <models.schema.Card object at 0x7ea56dd98230>, <models.schema.Card object at 0x7ea56dd98290>]
+wordpicker.five_cards: [<models.schema.Card object at 0x7ea56dd99b20>, <models.schema.Card object at 0x7ea56dd99910>, <models.schema.Card object at 0x7ea56dd99940>, <models.schema.Card object at 0x7ea56dd99a30>, <models.schema.Card object at 0x7ea56dd99790>]
+wordpicker.native_words: [('snip', 2), ("That's why. ", 23), ('what', 18), ('in the eyes of', 11), ('adds', 12)]
+wordpicker.learning_words: [('kopar', 2), ('ondan', 23), ('nazarında', 11), ('ne', 18), ('katar', 12)]
+words_left: ['snip', "That's why. ", 'what', 'in the eyes of', 'adds']
+words_right: ['kopar', 'ondan', 'nazarında', 'ne', 'katar']
+ids_left: [2, 23, 18, 11, 12]
+ids_right: [2, 23, 11, 18, 12]
 selected_left: None
 selected_right: None
 left_keys: ['1', '2', '3', '4', '5']
