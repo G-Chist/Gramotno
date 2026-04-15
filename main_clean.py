@@ -714,13 +714,13 @@ class Game:
         self.left_buttons = []
         for i in range(len(self.left_keys)):
             word = self.words_left[i] if i < len(self.words_left) else ""
-            btn = ptg.Button(pad_string_with_spaces(f"{self.left_keys[i]}) {word}"))
+            btn = ptg.Button(pad_string_with_spaces(f"{self.left_keys[i]}) {word}", 25))
             self.left_buttons.append(btn)
 
         self.right_buttons = []
         for i, key in enumerate(self.right_keys):
             word = self.words_right[i] if i < len(self.words_right) else ""
-            btn = ptg.Button(pad_string_with_spaces(f"{key}) {word}"))
+            btn = ptg.Button(pad_string_with_spaces(f"{key}) {word}", 25))
             self.right_buttons.append(btn)
 
         left_header = ptg.Label(f"[{COLORS['left_header']['foreground']}]{COLORS['left_header']['bold'] and '[bold]' or ''}Native[/bold]\n")
@@ -843,9 +843,9 @@ class Game:
                 self.ids_left = [card[1] for card in self.wordpicker.native_words] if self.wordpicker.native_words else []
                 self.ids_right = [card[1] for card in self.wordpicker.learning_words] if self.wordpicker.learning_words else []
                 for i, btn in enumerate(self.left_buttons):
-                    btn.label = pad_string_with_spaces(f"{self.left_keys[i]}) {self.words_left[i]}")
+                    btn.label = pad_string_with_spaces(f"{self.left_keys[i]}) {self.words_left[i]}", 25)
                 for i, btn in enumerate(self.right_buttons):
-                    btn.label = pad_string_with_spaces(f"{self.right_keys[i]}) {self.words_right[i]}")
+                    btn.label = pad_string_with_spaces(f"{self.right_keys[i]}) {self.words_right[i]}", 25)
                 self.status.value = "[green]Correct! Cards updated."
                 self.selected_left = None
                 self.selected_right = None
@@ -1015,8 +1015,8 @@ class TextLoader:
                 card = Card(
                     word=word,
                     translation=translation,
-                    source_lang=SETTINGS['learning_lang']['code'],
-                    target_lang=SETTINGS['native_lang']['code']
+                    target_lang=SETTINGS['native_lang']['code'],
+                    source_lang=SETTINGS['learning_lang']['code']
                 )
                 session.add(card)
                 loaded_count += 1
