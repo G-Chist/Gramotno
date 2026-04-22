@@ -793,19 +793,56 @@ class Game:
         
         This method is called when the user presses a key corresponding to
         one of the native language words displayed on the left side of the
-        game interface. It records which card was selected and starts a
-        timer to track how long the user takes to make their selection.
+        game interface. If a right-side word has already been selected, this
+        performs the match check to determine if the two selections correspond
+        to the same card.
+        
+        Matching logic:
+        - If both sides select the same card ID: Correct match! Load new cards
+        - If different card IDs selected: Incorrect match, record failure
         
         Args:
             index: The index of the selected button (0-4) corresponding to
                    the position in the left_buttons list.
         
         Side effects:
-            - Sets self.selected_left to the card ID of the chosen word
-            - Starts a timer in self.stats for response time tracking
+            - May update self.selected_left
+            - May call self.stats.record_result() to save the outcome
+            - May refresh the card display with new words
+            - Updates self.status with result message (green/red)
         """
+        for button_idx in range(0,5):
+            self.left_buttons[button_idx].selected_index = None
         self.selected_left = self.ids_left[index]
+        self.left_buttons[index].selected_index = 1
         self.stats.start_card_timer(self.selected_left)
+        
+        if self.selected_right is not None:
+
+            for button_idx in range(0,5):
+                self.left_buttons[button_idx].selected_index = None
+                self.right_buttons[button_idx].selected_index = None
+
+            if self.selected_left == self.selected_right:
+                self.stats.record_result(self.selected_left, correct=True)
+                self.wordpicker.get_random_5_cards()
+                self.wordpicker.fill_native_words()
+                self.wordpicker.fill_learning_words()
+                self.words_left = [card[0] for card in self.wordpicker.native_words] or []
+                self.words_right = [card[0] for card in self.wordpicker.learning_words] or []
+                self.ids_left = [card[1] for card in self.wordpicker.native_words] if self.wordpicker.native_words else []
+                self.ids_right = [card[1] for card in self.wordpicker.learning_words] if self.wordpicker.learning_words else []
+                for i, btn in enumerate(self.left_buttons):
+                    btn.label = pad_string_with_spaces(f"{self.left_keys[i]}) {self.words_left[i]}", 25)
+                for i, btn in enumerate(self.right_buttons):
+                    btn.label = pad_string_with_spaces(f"{self.right_keys[i]}) {self.words_right[i]}", 25)
+                self.status.value = "[green]Correct! Cards updated."
+                self.selected_left = None
+                self.selected_right = None
+            else:
+                self.stats.record_result(self.selected_left, correct=False)
+                self.status.value = "[red]Incorrect! Try again."
+                self.selected_left = None
 
     def right_button_handler(self, index):
         """
@@ -831,8 +868,17 @@ class Game:
             - Updates self.status with result message (green/red)
         """
         self.selected_right = self.ids_right[index]
+        for button_idx in range(0,5):
+            self.right_buttons[button_idx].selected_index = None
+        
+        self.right_buttons[index].selected_index = 1
         
         if self.selected_left is not None:
+
+            for button_idx in range(0,5):
+                self.left_buttons[button_idx].selected_index = None
+                self.right_buttons[button_idx].selected_index = None
+
             if self.selected_left == self.selected_right:
                 self.stats.record_result(self.selected_left, correct=True)
                 self.wordpicker.get_random_5_cards()
