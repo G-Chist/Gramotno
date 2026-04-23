@@ -316,6 +316,16 @@ class WordPicker:
         self.native_words = []
         self.learning_words = []
         self.five_cards = []
+        self.flipped = False
+
+    def _card_needs_flip(self, card, native_lang, learning_lang):
+        return card.source_lang == native_lang and card.target_lang == learning_lang
+
+    def _get_card_pair(self, card, native_lang, learning_lang):
+        if self._card_needs_flip(card, native_lang, learning_lang):
+            return (card.translation, card.word)
+        else:
+            return (card.word, card.translation)
 
     def get_cards(self):
         """
@@ -348,7 +358,8 @@ class WordPicker:
             learning_lang = SETTINGS.get('learning_lang', {}).get('code', 'tr')
             self.cards = [
                 c for c in all_cards 
-                if c.source_lang == learning_lang and c.target_lang == native_lang
+                if (c.source_lang == learning_lang and c.target_lang == native_lang)
+                or (c.source_lang == native_lang and c.target_lang == learning_lang)
             ]
         else:
             self.cards = all_cards
@@ -391,40 +402,16 @@ class WordPicker:
         self.five_cards = random.sample(self.cards, min(5, len(self.cards)))
 
     def fill_native_words(self):
-        """
-        Populates the native_words list with shuffled translations from five_cards.
-        
-        This method extracts the translation (the native language word) and
-        database ID from each card in five_cards, then shuffles them randomly.
-        The resulting list is stored in native_words and used to populate
-        the left side of the game interface.
-        
-        The output format is a list of tuples: (translation_string, card_id)
-        
-        Note:
-            This method expects five_cards to be populated. If empty, the
-            result will be an empty list.
-        """
-        words = [(card.translation, card.id) for card in self.five_cards]
+        native_lang = SETTINGS.get('native_lang', {}).get('code', 'en')
+        learning_lang = SETTINGS.get('learning_lang', {}).get('code', 'tr')
+        words = [(self._get_card_pair(card, native_lang, learning_lang)[0], card.id) for card in self.five_cards]
         random.shuffle(words)
         self.native_words = words
 
     def fill_learning_words(self):
-        """
-        Populates the learning_words list with shuffled words from five_cards.
-        
-        This method extracts the word (in the learning language) and database
-        ID from each card in five_cards, then shuffles them randomly. The
-        resulting list is stored in learning_words and used to populate the
-        right side of the game interface.
-        
-        The output format is a list of tuples: (word_string, card_id)
-        
-        Note:
-            This method expects five_cards to be populated. If empty, the
-            result will be an empty list.
-        """
-        words = [(card.word, card.id) for card in self.five_cards]
+        native_lang = SETTINGS.get('native_lang', {}).get('code', 'en')
+        learning_lang = SETTINGS.get('learning_lang', {}).get('code', 'tr')
+        words = [(self._get_card_pair(card, native_lang, learning_lang)[1], card.id) for card in self.five_cards]
         random.shuffle(words)
         self.learning_words = words
 
@@ -465,7 +452,8 @@ class WordPicker:
             learning_lang = SETTINGS.get('learning_lang', {}).get('code', 'tr')
             cards = [
                 c for c in all_cards 
-                if c.source_lang == learning_lang and c.target_lang == native_lang
+                if (c.source_lang == learning_lang and c.target_lang == native_lang)
+                or (c.source_lang == native_lang and c.target_lang == learning_lang)
             ]
         else:
             cards = all_cards
