@@ -45,8 +45,18 @@
 5. If they don't match, try again!
 6. Your progress is automatically saved
 
-## Run
+## Install
+
 ```bash
-pip install -r requirements.txt 
+git clone https://github.com/G-Chist/EvolvingCards.git
+cd EvolvingCards
+git lfs install
+git lfs pull
+pip install -r requirements.txt
+```
+
+## Run
+
+```bash
 python main_clean.py
 ```
