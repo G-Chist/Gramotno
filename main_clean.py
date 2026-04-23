@@ -711,8 +711,8 @@ class Game:
             btn = ptg.Button(pad_string_with_spaces(f"{key}) {word}", 25))
             self.right_buttons.append(btn)
 
-        left_header = ptg.Label(f"[{COLORS['left_header']['foreground']}]{COLORS['left_header']['bold'] and '[bold]' or ''}Native[/bold]\n")
-        right_header = ptg.Label(f"[{COLORS['right_header']['foreground']}]{COLORS['right_header']['bold'] and '[bold]' or ''}Learning[/bold]\n")
+        left_header = ptg.Label(f"[{COLORS['left_header']['foreground']}]{COLORS['left_header']['bold'] and '[bold]' or ''}Learning[/bold]\n")
+        right_header = ptg.Label(f"[{COLORS['right_header']['foreground']}]{COLORS['right_header']['bold'] and '[bold]' or ''}Native[/bold]\n")
         
         left_container = ptg.Container(
             left_header,

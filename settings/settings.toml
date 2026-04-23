@@ -38,7 +38,7 @@ key_4 = "d"
 key_5 = "e"
 
 [native_lang]
-code = "ru"
+code = "en"
 
 [learning_lang]
-code = "en"
+code = "tr"
