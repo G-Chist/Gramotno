@@ -48,8 +48,8 @@
 ## Install
 
 ```bash
-git clone https://github.com/G-Chist/EvolvingCards.git
-cd EvolvingCards
+git clone https://github.com/G-Chist/Gramotno.git
+cd Gramotno
 git lfs install
 git lfs pull
 pip install -r requirements.txt
